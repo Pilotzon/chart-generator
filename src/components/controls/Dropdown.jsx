@@ -3,6 +3,9 @@ import { createPortal } from 'react-dom';
 import { IconChevronDown } from './Icons.jsx';
 import { SvgIcon } from './SvgIcon.jsx';
 
+// 5px padding + 1px border of the portal menu
+const MENU_FRAME = 6;
+
 /**
  * Custom dropdown. The menu is rendered in a portal (position: fixed) so that it is never
  * clipped by the scrolling sidebar.
@@ -28,9 +31,16 @@ export function Dropdown({
         const openUp = spaceBelow < Math.min(menuH, 220) && r.top > spaceBelow;
         const maxHeight = Math.max(120, (openUp ? r.top : spaceBelow) - 8);
         const h = Math.min(menuH, maxHeight);
+        // Every item is exactly as big as the closed dropdown (same width and height); the menu is wider by its own
+        // padding + border so that the items line up with the trigger.
+        const frame = MENU_FRAME;
+        const width = r.width + frame * 2;
+        const left = Math.max(4, Math.min(r.left - frame, window.innerWidth - width - 4));
         setPos({
-            left: r.left,
-            width: Math.max(r.width, 140),
+            left,
+            width,
+            itemW: r.width,
+            itemH: r.height,
             top: openUp ? r.top - h - 4 : r.bottom + 4,
             maxHeight
         });
@@ -81,6 +91,8 @@ export function Dropdown({
                         left: pos?.left ?? 0,
                         top: pos?.top ?? 0,
                         width: pos?.width,
+                        '--dd-item-w': pos ? `${pos.itemW}px` : undefined,
+                        '--dd-item-h': pos ? `${pos.itemH}px` : undefined,
                         maxHeight: pos?.maxHeight,
                         visibility: pos ? 'visible' : 'hidden',
                         pointerEvents: 'auto'

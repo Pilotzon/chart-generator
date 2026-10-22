@@ -2,6 +2,14 @@ import { MAX_COLUMNS } from './constants.js';
 import { defaultColumn } from './defaults.js';
 import { hasText, flipRunsForWord, runsToPlainText, splitRunsIntoLines, wrapRuns } from './richText.js';
 import { measureRunWidth } from './canvasText.js';
+import { LONG_TRIANGLE } from './canvasShapes.js';
+
+/** How far an arrow head reaches back from its tip (px) — used to keep axis titles clear of it. */
+export function arrowReachOf(style, size) {
+    if (style === 'long-triangle') return size * LONG_TRIANGLE.length;
+    if (style === 'circle') return size * 0.35;
+    return size;
+}
 
 let measureCtx = null;
 /** Shared off-screen 2D context used for text measuring (layout, SVG export, ...). */
@@ -119,7 +127,18 @@ export function computeLayout(state, W, H, opts = {}) {
         ? yLabelEdge + yLabelBlockW + yLabelGap + yTickW + yTickGap + tLen
         : Math.max(40, yTickW + yTickGap + tLen + 10, yAbove ? yAboveW / 2 + yLabelEdge : 0);
     const yLabelX = left - tLen - yTickGap - yTickW - yLabelGap - yLabelBlockW / 2;
-    const right = 40;
+    // X title at the axis end: it sits to the right of the axis (and of its arrow), so the plot gets narrower.
+    // Long titles wrap to at most ~28% of the canvas width.
+    const xEnd = hasX && xPlacement === 'end';
+    const xEndGap = 10;
+    let xEndLines = [];
+    let xEndW = 0;
+    if (xEnd) {
+        xEndLines = wrapRuns(state.xLabelRuns, W * 0.28, run => measureRunWidth(mctx, run, axisFontPx, state.axisFont))
+            .map(flipLineRuns);
+        xEndW = Math.max(0, ...xEndLines.map(line => line.reduce((sum, run) => sum + measureRunWidth(mctx, run, axisFontPx, state.axisFont), 0)));
+    }
+    const right = xEnd ? Math.max(40, xEndGap + xEndW + 10) : 40;
 
     top = Math.max((hasTitle || hasSub) ? 80 : 40, top);
     bottom = Math.max(xBelow ? 80 : 50, bottom);
@@ -153,9 +172,9 @@ export function computeLayout(state, W, H, opts = {}) {
 
     // Y title above the axis: sits over the column titles (and over the axis arrow, if any)
     const arrowOn = !!(opts.advanced && state.showAxisArrows && state.arrowLeft && state.borderLeft);
-    const arrowReach = arrowOn ? (parseFloat(state.axisArrowSize) || 14) * 1.4 + 2 : 0;
+    const arrowReach = arrowOn ? arrowReachOf(state.axisArrowStyle || 'triangle', parseFloat(state.axisArrowSize) || 14) + 2 : 0;
     const yAboveH = yAbove ? yLines * (axisFontPx * 1.35) : 0;
-    const yAboveBlock = yAbove ? yAboveH + 8 + Math.max(0, arrowReach - aboveBlock) : 0;
+    const yAboveBlock = yAbove ? yAboveH + 4 + Math.max(0, arrowReach - aboveBlock) : 0;
 
     const pad = {
         top: top + aboveBlock + yAboveBlock,
@@ -174,14 +193,12 @@ export function computeLayout(state, W, H, opts = {}) {
     const innerH = ph - 2 * mYc;
 
     // Where the axis titles go (top-left corner of the text block; `anchor` is the text alignment)
-    const arrowBottomHalf = (opts.advanced && state.showAxisArrows && state.arrowBottom && state.borderBottom)
-        ? (parseFloat(state.axisArrowSize) || 14) * 0.5 : 0;
-    const xBlockH = xLines * (axisFontPx * 1.35);
-    const xLabel = xPlacement === 'end'
-        ? { placement: 'end', anchor: 'right', x: pad.left + pw, y: pad.top + ph - 6 - arrowBottomHalf - xBlockH }
+    const xBlockH = (xEnd ? xEndLines.length : xLines) * (axisFontPx * 1.35);
+    const xLabel = xEnd
+        ? { placement: 'end', anchor: 'left', x: pad.left + pw + xEndGap, y: pad.top + ph - xBlockH / 2, lines: xEndLines, width: xEndW, height: xBlockH }
         : { placement: 'below', anchor: 'center', x: pad.left + pw / 2, y: pad.top + ph + tLen + tickBlockH + 14 + belowBlock };
     const yLabel = yPlacement === 'above'
-        ? { placement: 'above', anchor: 'center', x: pad.left, y: pad.top - aboveBlock - Math.max(0, arrowReach - aboveBlock) - 4 - yAboveH }
+        ? { placement: 'above', anchor: 'center', x: pad.left, y: pad.top - Math.max(aboveBlock, arrowReach) - 1 - yAboveH }
         : { placement: 'side', x: yLabelX, y: pad.top + ph / 2 };
 
     return {

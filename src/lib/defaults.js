@@ -27,6 +27,7 @@ export function defaultChart(name = 'Chart 1', colorIdx = 0) {
         lineColor: '#1a1a1a',
         lineWidth: 2.5,
         lineTension: 0,
+        lineCap: 'round',      // 'round' | 'butt' (flat, no rounding) — applies to both ends of the line
         markerShape: 'diamond',
         markerSize: 8,
         shadowEnabled: false,

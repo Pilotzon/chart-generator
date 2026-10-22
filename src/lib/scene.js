@@ -192,11 +192,17 @@ export function drawScene(ctx, state, opts) {
     const xRuns = T(state.xLabelRuns);
     if (hasText(xRuns)) {
         const lineH = axisFontPx * 1.35;
-        const { x: lx, y: ly, anchor: lAnchor } = layout.xLabel;
+        const { x: lx, y: ly } = layout.xLabel;
         ctx.textBaseline = 'top';
-        const n = drawRichText(ctx, xRuns, lx, ly, axisFontPx, state.axisFont, lAnchor, hasHebrewInRuns(xRuns), lineH);
-        const hx = lAnchor === 'right' ? lx - 400 : lx - 200;
-        registerHitbox('xLabel', hx, ly - 5, 400, n * lineH + 10);
+        if (layout.xLabel.placement === 'end') {
+            // right of the axis end; the lines are already wrapped (and flipped) by the layout
+            const lines = layout.xLabel.lines;
+            drawRichLines(ctx, lines, lx, ly, axisFontPx, state.axisFont, 'left', lines.some(l => hasHebrewInRuns(l)), lineH);
+            registerHitbox('xLabel', lx - 4, ly - 5, layout.xLabel.width + 8, layout.xLabel.height + 10);
+        } else {
+            const n = drawRichText(ctx, xRuns, lx, ly, axisFontPx, state.axisFont, 'center', hasHebrewInRuns(xRuns), lineH);
+            registerHitbox('xLabel', lx - 200, ly - 5, 400, n * lineH + 10);
+        }
     }
     const yRuns = T(state.yLabelRuns);
     if (hasText(yRuns)) {
@@ -283,7 +289,7 @@ export function drawScene(ctx, state, opts) {
             ctx.strokeStyle = lineColor;
             ctx.lineWidth = chart.lineWidth;
             ctx.lineJoin = 'round';
-            ctx.lineCap = 'round';
+            ctx.lineCap = chart.lineCap === 'butt' ? 'butt' : 'round';
             drawCurvedLine(ctx, linePts, tension);
 
             if (advanced) {

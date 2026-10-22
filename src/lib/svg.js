@@ -213,8 +213,13 @@ export function buildVectorSVG(state, opts = {}) {
     const xRuns = T(state.xLabelRuns);
     if (hasText(xRuns)) {
         const lineH = axisFontPx * 1.35;
-        const { x: lx, y: ly, anchor: lAnchor } = layout.xLabel;
-        svg += buildSvgRichLines(mctx, splitRunsIntoLines(xRuns), lx, ly + axisFontPx * 0.82, axisFontPx, state.axisFont, lAnchor === 'right' ? 'end' : 'middle', hasHebrewInRuns(xRuns), lineH);
+        const { x: lx, y: ly } = layout.xLabel;
+        if (layout.xLabel.placement === 'end') {
+            const lines = layout.xLabel.lines;
+            svg += buildSvgRichLines(mctx, lines, lx, ly + axisFontPx * 0.82, axisFontPx, state.axisFont, 'start', lines.some(l => hasHebrewInRuns(l)), lineH);
+        } else {
+            svg += buildSvgRichLines(mctx, splitRunsIntoLines(xRuns), lx, ly + axisFontPx * 0.82, axisFontPx, state.axisFont, 'middle', hasHebrewInRuns(xRuns), lineH);
+        }
     }
     const yRuns = T(state.yLabelRuns);
     if (hasText(yRuns)) {
@@ -252,7 +257,7 @@ export function buildVectorSVG(state, opts = {}) {
 
         if (showLine && linePts.length >= 2) {
             svg += '<g clip-path="url(#plot-clip)">\n';
-            svg += `<path d="${buildSplinePathD(linePts, tension)}" fill="none" stroke="${lineColor}" stroke-width="${chart.lineWidth}" stroke-linejoin="round" stroke-linecap="round"/>\n`;
+            svg += `<path d="${buildSplinePathD(linePts, tension)}" fill="none" stroke="${lineColor}" stroke-width="${chart.lineWidth}" stroke-linejoin="round" stroke-linecap="${chart.lineCap === 'butt' ? 'butt' : 'round'}"/>\n`;
             if (advanced) {
                 const aSize = parseFloat(chart.arrowSize) || 12;
                 if (chart.arrowEnd && chart.arrowEnd !== 'none') {

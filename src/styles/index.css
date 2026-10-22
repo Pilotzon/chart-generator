@@ -1342,7 +1342,12 @@ textarea:focus {
 }
 
 .dropdown-item {
-    padding: 8px 12px;
+    box-sizing: border-box;
+    /* same footprint as the closed dropdown (the sizes are measured in Dropdown.jsx) */
+    width: var(--dd-item-w, auto);
+    height: var(--dd-item-h, 36px);
+    flex-shrink: 0;
+    padding: 0 9px 0 11px;
     font-size: 13.5px;
     color: var(--text-primary);
     cursor: pointer;
@@ -1352,15 +1357,15 @@ textarea:focus {
     text-overflow: ellipsis;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     font-family: var(--ui-font);
-    font-weight: 450;
+    font-weight: 500;
     transition: background 0.1s var(--ease-smooth);
 }
 
 .dropdown-item-icon {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
     color: var(--text-tertiary);
     display: inline-flex;
@@ -1369,8 +1374,8 @@ textarea:focus {
 }
 
 .dropdown-item-icon svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
 }
 
 .dropdown-item-label {
@@ -1383,20 +1388,20 @@ textarea:focus {
     background: var(--bg-hover);
 }
 
+/* the previously chosen item is marked by a blue check mark on the right (no background) */
 .dropdown-item.selected {
-    background: var(--bg-active);
     color: var(--text-primary);
-    font-weight: 550;
 }
 
 .dropdown-item.selected::after {
     content: '';
     display: inline-block;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     margin-left: auto;
+    margin-right: -1px;
     flex-shrink: 0;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1a18' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232C7BD7' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
     background-size: contain;
     background-repeat: no-repeat;
 }
@@ -1460,7 +1465,7 @@ textarea:focus {
 }
 
 .toggle-switch input:checked+.toggle-slider {
-    background: var(--text-primary);
+    background: #2C7BD7;
 }
 
 .toggle-switch input:checked+.toggle-slider::before {
@@ -1472,7 +1477,7 @@ textarea:focus {
 }
 
 .toggle-switch:hover input:checked+.toggle-slider {
-    background: #000;
+    background: #2570C4;
 }
 
 @keyframes subIn {

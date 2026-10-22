@@ -162,16 +162,28 @@ describe('axis title placement', () => {
         return s;
     };
 
-    it('X title at the axis end frees the space below the axis and sits inside, right-aligned', () => {
+    it('X title at the axis end sits right of the axis end, the plot gets narrower and the bottom space is freed', () => {
         const s = base();
         const below = computeLayout(s, 850, 680);
         s.xLabelPlacement = 'end';
         const end = computeLayout(s, 850, 680);
         expect(end.pad.bottom).toBeLessThan(below.pad.bottom);
-        expect(end.ph).toBeGreaterThan(below.ph);
-        expect(end.xLabel.anchor).toBe('right');
-        expect(end.xLabel.x).toBeCloseTo(end.pad.left + end.pw, 5);
-        expect(end.xLabel.y).toBeLessThan(end.pad.top + end.ph);          // above the axis line
+        expect(end.pad.right).toBeGreaterThan(below.pad.right);           // room for the text on the right
+        expect(end.pw).toBeLessThan(below.pw);
+        expect(end.xLabel.anchor).toBe('left');
+        expect(end.xLabel.x).toBeGreaterThan(end.pad.left + end.pw);       // right of the axis end (and its arrow)
+        expect(end.xLabel.x + end.xLabel.width).toBeLessThanOrEqual(850);  // fits in the canvas
+        // vertically centred on the axis line
+        expect(end.xLabel.y + end.xLabel.height / 2).toBeCloseTo(end.pad.top + end.ph, 5);
+    });
+
+    it('a long X title at the axis end wraps instead of squeezing the plot', () => {
+        const s = base();
+        s.xLabelPlacement = 'end';
+        s.xLabelRuns = textToRuns('A really long horizontal axis title that cannot possibly fit next to the axis end');
+        const l = computeLayout(s, 850, 680);
+        expect(l.xLabel.lines.length).toBeGreaterThan(1);
+        expect(l.pad.right).toBeLessThan(850 * 0.35);
     });
 
     it('Y title above the axis frees the left side, is centred over the axis and fits the canvas', () => {
@@ -196,7 +208,7 @@ describe('axis title placement', () => {
         s.xLabelPlacement = 'end';
         s.yLabelPlacement = 'above';
         const svg = buildVectorSVG(s, { mode: 'classic' });
-        expect(svg).toContain('text-anchor="end"');
+        expect(svg).toContain('text-anchor="start"');
         expect(svg).not.toContain('rotate(-90)');
     });
 });
@@ -234,5 +246,16 @@ describe('line clipping and the long triangle arrow', () => {
         expect(length(long)).toBeGreaterThan(length(tri));
         expect(width(long)).toBeLessThan(width(tri));
         expect(width(long)).toBeGreaterThan(width(tri) * 0.85);              // "very subtle"
+    });
+});
+
+describe('line ends', () => {
+    it('rounded by default, flat (butt) on request — SVG', () => {
+        const s = makeDefaultState();
+        expect(s.charts[0].lineCap).toBe('round');
+        expect(buildVectorSVG(s, { mode: 'classic' })).toContain('stroke-linecap="round"/>');
+        s.charts[0].lineCap = 'butt';
+        const svg = buildVectorSVG(s, { mode: 'classic' });
+        expect(svg).toMatch(/<path d="[^"]+" fill="none" stroke="[^"]+" stroke-width="[^"]+" stroke-linejoin="round" stroke-linecap="butt"\/>/);
     });
 });

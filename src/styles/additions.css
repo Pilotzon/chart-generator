@@ -204,6 +204,7 @@
     display: inline-flex;
     align-items: stretch;
     height: 38px;
+    width: 110px;                 /* SVG and PNG buttons share this size */
     background: var(--bg-input);
     border: 1px solid rgba(60, 56, 46, 0.2);
     border-radius: var(--radius-md);   /* rounded rectangle, not a pill */
@@ -227,10 +228,13 @@
 
 /* large zone on the left */
 .export-split-main {
+    flex: 1;
+    min-width: 0;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 7px;
-    padding: 0 14px 0 14px;
+    padding: 0;
     font-size: 13.5px;
     font-weight: 520;
     letter-spacing: -0.1px;

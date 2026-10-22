@@ -1,5 +1,5 @@
 import { useSettings } from '../../hooks/useSettings.js';
-import { ARROW_OPTIONS, MARKER_OPTIONS } from '../../lib/options.js';
+import { ARROW_OPTIONS, LINE_CAP_OPTIONS, MARKER_OPTIONS } from '../../lib/options.js';
 import {
     ColorRow, Divider, DropdownRow, RangeRow, Reveal, SectionLabel, ToggleRow
 } from '../controls/Inputs.jsx';
@@ -12,6 +12,7 @@ export function LineBlock() {
             <ColorRow label="Line Color" value={chart.lineColor} onChange={v => setChart('lineColor', v)} />
             <RangeRow label="Line Width" min={1} max={6} step={0.5} value={chart.lineWidth} onChange={v => setChart('lineWidth', v)} />
             <RangeRow label="Smoothness" min={0} max={1} step={0.05} value={chart.lineTension} onChange={v => setChart('lineTension', v)} />
+            <DropdownRow label="Line Ends" value={chart.lineCap || 'round'} options={LINE_CAP_OPTIONS} onChange={v => setChart('lineCap', v)} />
         </>
     );
 }

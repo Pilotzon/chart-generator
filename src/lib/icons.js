@@ -22,6 +22,8 @@ export const DROPDOWN_ICONS = {
     'arrow': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="14 7 19 12 14 17"/></svg>',
     'triangle': '<svg viewBox="0 0 24 24"><line x1="4" y1="12" x2="13" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><polygon points="20,12 13,7.5 13,16.5" fill="currentColor"/></svg>',
     'long-triangle': '<svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="10" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><polygon points="21,12 10,7.8 10,16.2" fill="currentColor"/></svg>',
+    'cap-round': '<svg viewBox="0 0 24 24"><line x1="8" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="7" stroke-linecap="butt"/><circle cx="8" cy="12" r="3.5" fill="currentColor"/></svg>',
+    'cap-flat': '<svg viewBox="0 0 24 24"><line x1="6" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="7" stroke-linecap="butt"/></svg>',
     'stealth': '<svg viewBox="0 0 24 24"><line x1="4" y1="12" x2="12" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><polygon points="20,12 12,7.5 15,12 12,16.5" fill="currentColor"/></svg>'
 };
 

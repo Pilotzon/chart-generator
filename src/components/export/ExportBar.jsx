@@ -126,7 +126,7 @@ export function ExportBar() {
                 {/* Classic: the label downloads straight away, the chevron holds the resolution.
                     Advanced: both zones open the popup, like SVG. */}
                 <SplitButton
-                    label={advanced ? 'PNG' : 'Export PNG'}
+                    label="PNG"
                     variant="dark"
                     open={open === 'png'}
                     mainOpens={advanced}

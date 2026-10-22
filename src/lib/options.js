@@ -10,6 +10,11 @@ export const ARROW_OPTIONS = [
 
 export const AXIS_ARROW_OPTIONS = ARROW_OPTIONS.filter(o => o.value !== 'none' && o.value !== 'circle');
 
+export const LINE_CAP_OPTIONS = [
+    { value: 'round', label: 'Rounded', icon: 'cap-round' },
+    { value: 'butt', label: 'Flat', icon: 'cap-flat' }
+];
+
 export const MARKER_OPTIONS = [
     { value: 'diamond', label: 'Diamond' },
     { value: 'circle', label: 'Circle' },

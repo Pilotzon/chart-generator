@@ -91,7 +91,7 @@ describe('classic mode', () => {
         expect(split.children).toHaveLength(2);
         expect(split.children[0].className).toBe('export-split-main');
         expect(split.children[1].className).toBe('export-split-chev');
-        expect(byText('.export-menu:nth-child(2) .export-split-main', 'Export PNG')).not.toBeNull();
+        expect(byText('.export-menu:nth-child(2) .export-split-main', 'PNG')).not.toBeNull();
         expect(qa('.export-split')).toHaveLength(2);
         expect(q('.export-split.is-dark')).not.toBeNull();
         expect(q('.export-pill')).toBeNull();
@@ -411,6 +411,38 @@ describe('axis titles, margins and arrows (UI)', () => {
         await click(toggle);
         await pick(dropdownRow('Style'), 'Long triangle');
         expect(stored('GRAPH_STUDIO_PRO_V13_ADVANCED').axisArrowStyle).toBe('long-triangle');
+    });
+});
+
+describe('dropdown menu geometry and line ends', () => {
+    it('every item is as big as the closed dropdown; the menu is wider by its own frame', async () => {
+        await render();
+        const trigger = q('.dropdown-trigger');
+        trigger.getBoundingClientRect = () => ({ left: 300, top: 100, width: 160, height: 36, right: 460, bottom: 136 });
+        await click(trigger);
+        const menu = q('.portal-dropdown-menu');
+        expect(menu.style.width).toBe('172px');
+        expect(menu.style.left).toBe('294px');
+        expect(menu.style.getPropertyValue('--dd-item-w')).toBe('160px');
+        expect(menu.style.getPropertyValue('--dd-item-h')).toBe('36px');
+        expect(qa('.dropdown-item.selected', menu)).toHaveLength(1);
+    });
+
+    it('line end (flat / rounded) is a chart option in both modes', async () => {
+        await render();
+        const rows = () => qa('.control-row').find(r => r.querySelector(':scope > label')?.textContent === 'Line Ends');
+        expect(rows()).toBeTruthy();
+        await click(rows().querySelector('.dropdown-trigger'));
+        await click(byText('.portal-dropdown-menu .dropdown-item', 'Flat'));
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').charts[0].lineCap).toBe('butt');
+    });
+
+    it('PNG and SVG buttons share one size; switches are #2C7BD7', async () => {
+        const fs = await import('node:fs');
+        const css = fs.readFileSync('src/styles/additions.css', 'utf8') + fs.readFileSync('src/styles/index.css', 'utf8');
+        expect(css).toMatch(/\.export-split \{[^}]*width: 110px/);
+        expect(css).toMatch(/\.toggle-switch input:checked\+\.toggle-slider \{\s*background: #2C7BD7/);
+        expect(css).toContain("stroke='%232C7BD7'");
     });
 });
 

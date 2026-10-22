@@ -22,7 +22,7 @@ export const CHART_PALETTE = [
 
 // Keys that live on a single chart (the rest live on the global state)
 export const CHART_SCOPED_KEYS = [
-    'lineColor', 'lineWidth', 'lineTension', 'markerShape', 'markerSize',
+    'lineColor', 'lineWidth', 'lineTension', 'lineCap', 'markerShape', 'markerSize',
     'showLine',
     'shadowEnabled', 'shadowColor1', 'shadowOpacity1', 'shadowColor2',
     'shadowOpacity2', 'shadowOffset', 'shadowIntensity',
