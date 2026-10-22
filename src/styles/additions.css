@@ -413,9 +413,11 @@
 .col-editor .rich-text-editor { min-height: 38px; }
 
 
-/* ── Edge picker (border lines / axis arrows) ── */
-.edge-sketch { height: 112px; margin: 4px 0 2px; }
-.edge-sketch .sketch-lines { inset: 28px 28px; width: calc(100% - 56px); height: calc(100% - 56px); }
+/* ── Edge picker (border lines / axis arrows) ──
+   The four lines are drawn on the edges of a little plot area inside the frame (they meet at the corners,
+   like the real borders); the side names sit in the margin outside the lines. */
+.edge-sketch { --m: 26px; height: 128px; margin: 4px 0 2px; }
+.edge-sketch .sketch-lines { inset: calc(var(--m) + 8px); width: calc(100% - 2 * var(--m) - 16px); height: calc(100% - 2 * var(--m) - 16px); }
 
 .edge-sketch-edge {
     position: absolute;
@@ -440,25 +442,26 @@
 .edge-sketch-line {
     position: absolute;
     background: rgba(60, 56, 46, 0.14);
-    border-radius: 2px;
-    transition: background 0.15s var(--ease-smooth), transform 0.15s var(--ease-smooth);
+    border-radius: 1px;
+    transition: background 0.15s var(--ease-smooth);
     pointer-events: none;
 }
 
 .edge-sketch-edge.is-on .edge-sketch-line { background: var(--text-primary); }
 
-.edge-top, .edge-bottom { left: 0; right: 0; height: 24px; }
-.edge-left, .edge-right { top: 24px; bottom: 24px; width: 24px; }
+/* hit areas = the margin strips around the plot area */
+.edge-top, .edge-bottom { left: 0; right: 0; height: var(--m); }
+.edge-left, .edge-right { top: var(--m); bottom: var(--m); width: var(--m); }
 .edge-top { top: 0; } .edge-bottom { bottom: 0; }
 .edge-left { left: 0; } .edge-right { right: 0; }
 .edge-left .edge-sketch-label, .edge-right .edge-sketch-label { writing-mode: vertical-rl; }
 .edge-left .edge-sketch-label { transform: rotate(180deg); }
 
-.edge-top .edge-sketch-line, .edge-bottom .edge-sketch-line { left: 0; right: 0; height: 3px; }
-.edge-left .edge-sketch-line, .edge-right .edge-sketch-line { top: -24px; bottom: -24px; width: 3px; }
-.edge-top .edge-sketch-line { top: 0; } .edge-bottom .edge-sketch-line { bottom: 0; }
-.edge-left .edge-sketch-line { left: 0; } .edge-right .edge-sketch-line { right: 0; }
-.edge-top .edge-sketch-label { margin-top: 4px; } .edge-bottom .edge-sketch-label { margin-bottom: 4px; }
+/* lines sit on the inner side of each strip and run the full length of the plot area, corner to corner */
+.edge-top .edge-sketch-line, .edge-bottom .edge-sketch-line { left: calc(var(--m) - 1.5px); right: calc(var(--m) - 1.5px); height: 3px; }
+.edge-left .edge-sketch-line, .edge-right .edge-sketch-line { top: -1.5px; bottom: -1.5px; width: 3px; }
+.edge-top .edge-sketch-line { bottom: -1.5px; } .edge-bottom .edge-sketch-line { top: -1.5px; }
+.edge-left .edge-sketch-line { right: -1.5px; } .edge-right .edge-sketch-line { left: -1.5px; }
 
 /* ── Position picker (legend corners / title alignment) ── */
 .pos-sketch { height: 104px; margin: 4px 0 2px; }

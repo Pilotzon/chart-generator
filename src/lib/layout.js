@@ -87,10 +87,24 @@ export function computeLayout(state, W, H, opts = {}) {
 
     let bottom = tLen + tickBlockH + 15 + xLines * (axisFontPx * 1.4) + (hasX ? 20 : 5);
 
-    const yTickCharW = tickFontPx * 0.65;
-    const maxYStr = Math.max(Math.abs(state.yMin).toString().length, Math.abs(state.yMax).toString().length);
-    const yTickW = tickLabels ? Math.max(25, maxYStr * yTickCharW) : 0;
-    const left = Math.max(hasY ? 90 : 55, tLen + yTickW + 10 + yLines * (axisFontPx * 1.4) + (hasY ? 25 : 10));
+    // Width of the widest Y tick number (measured), so the Y title can sit right next to them
+    let yTickW = 0;
+    if (tickLabels) {
+        mctx.font = `${tickFontPx}px ${state.tickFont}`;
+        const tickStr = v => (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1));
+        const step = Math.abs(parseFloat(state.yStep)) || 0;
+        const values = [state.yMin, state.yMax];
+        if (step > 0) for (let v = state.yMin, n = 0; v <= state.yMax + 0.001 && n < 200; v += step, n++) values.push(v);
+        yTickW = Math.max(...values.map(v => mctx.measureText(tickStr(v)).width));
+    }
+    const yTickGap = tickLabels ? 6 : 0;                     // between the tick numbers and the tick marks
+    const yLabelBlockW = yLines * (axisFontPx * 1.35);
+    const yLabelGap = 6;                                     // between the Y title and the tick numbers
+    const yLabelEdge = 6;                                    // between the canvas edge and the Y title
+    const left = hasY
+        ? yLabelEdge + yLabelBlockW + yLabelGap + yTickW + yTickGap + tLen
+        : Math.max(40, yTickW + yTickGap + tLen + 10);
+    const yLabelX = left - tLen - yTickGap - yTickW - yLabelGap - yLabelBlockW / 2;
     const right = 40;
 
     top = Math.max((hasTitle || hasSub) ? 80 : 40, top);
@@ -130,7 +144,7 @@ export function computeLayout(state, W, H, opts = {}) {
     const yRange = state.yMax - state.yMin;
 
     return {
-        pad, pw, ph, W, H, tLen, tickBlockH,
+        pad, pw, ph, W, H, tLen, tickBlockH, yLabelX,
         aboveBlock, belowBlock, colLineH, colFontPx,
         columnTitles,
         mapX: x => pad.left + ((x - state.xMin) / xRange) * pw,

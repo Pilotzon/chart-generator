@@ -106,3 +106,24 @@ describe('flip text for MS Word (macOS)', () => {
         expect(out.map(r => [r.text, r.bold])).toEqual([['ג', false], ['בא', true]]);
     });
 });
+
+describe('Y axis title placement', () => {
+    it('sits right next to the tick numbers instead of far away at the canvas edge', () => {
+        const s = makeDefaultState();
+        s.yLabelRuns = textToRuns('Temperature');
+        const l = computeLayout(s, 850, 680);
+        const blockW = 1 * (parseInt(s.axisFontSize) || 18) * 1.35;
+        expect(l.pad.left).toBeLessThan(90);                      // used to be ≥ 90
+        expect(l.yLabelX - blockW / 2).toBeCloseTo(6, 5);          // small margin at the canvas edge
+        // tick numbers start at pad.left - tLen - 6 - width; the title block ends 6px before them
+        expect(l.yLabelX + blockW / 2).toBeLessThan(l.pad.left - l.tLen - 6 - 6);
+    });
+
+    it('shrinks further when the tick numbers are hidden', () => {
+        const s = makeDefaultState();
+        s.yLabelRuns = textToRuns('Temperature');
+        const withTicks = computeLayout(s, 850, 680).pad.left;
+        s.showTickLabels = false;
+        expect(computeLayout(s, 850, 680).pad.left).toBeLessThan(withTicks);
+    });
+});

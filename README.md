@@ -51,6 +51,7 @@ tests/                      vitest suites
   number at the bottom, the selected column's ring follows the frame's rounded corners), border lines and axis-arrow
   sides (click the edges of a frame), legend position (four corner chips)
   and, in Advanced mode, marked points (click a dot to open its card below with a caret).
+* **Y axis title** sits right next to the Y tick numbers (the left margin is measured from them).
 * **Alignment inputs** (title alignment, column title alignment) are three icon buttons (left / center / right).
 * **Tick numbers** can be hidden in Advanced mode (*Text* tab → *Show Tick Numbers*); the space they reserved is released too.
 * **Export**: no bar background or border, just two bordered split buttons, each with a wide label zone and a small

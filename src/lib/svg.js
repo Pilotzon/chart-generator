@@ -217,7 +217,7 @@ export function buildVectorSVG(state, opts = {}) {
         const isRtl = hasHebrewInRuns(yRuns);
         const lineH = axisFontPx * 1.35;
         const lines = splitRunsIntoLines(yRuns);
-        svg += `<g transform="translate(25,${pad.top + ph / 2}) rotate(-90)">\n`;
+        svg += `<g transform="translate(${layout.yLabelX},${pad.top + ph / 2}) rotate(-90)">\n`;
         lines.forEach((line, li) => {
             const yOff = (li - (lines.length - 1) / 2) * lineH;
             let cursor = -measureLineWidth(mctx, line, axisFontPx, state.axisFont) / 2;

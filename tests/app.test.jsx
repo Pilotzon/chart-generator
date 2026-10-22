@@ -160,6 +160,8 @@ describe('classic mode', () => {
         await render();
         await click(byText('.group-title-text', 'Axes & Grid'));
         const edges = qa('.edge-sketch-edge');
+        // lines are drawn on the inner side of each strip, running corner to corner
+        expect(qa('.edge-sketch-edge .edge-sketch-line')).toHaveLength(4);
         expect(edges.map(e => e.className.match(/edge-(top|right|bottom|left)/)[1])).toEqual(['top', 'right', 'bottom', 'left']);
         const top = edges[0];
         const before = top.getAttribute('aria-pressed') === 'true';

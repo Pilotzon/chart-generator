@@ -204,7 +204,7 @@ export function drawScene(ctx, state, opts) {
         const lineH = axisFontPx * 1.35;
         const linesArr = splitRunsIntoLines(yRuns);
         const totalH = linesArr.length * lineH;
-        const xPos = 25;
+        const xPos = layout.yLabelX;
         const cy = pad.top + ph / 2;
         ctx.save();
         ctx.translate(xPos, cy);
