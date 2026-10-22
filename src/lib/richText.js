@@ -35,13 +35,81 @@ export function hasHebrewInRuns(runs) {
 
 const plainRun = text => ({ text, bold: false, italic: false, underline: false, color: '#000000' });
 
-// Flip a text box: every line is mirrored character-by-character ("hello" -> "olleh"),
-// per-character formatting (bold / italic / underline / color) travels with its character.
-// Paired punctuation is swapped while mirroring, so "(abc)" becomes "(cba)" and not ")cba(".
+// ─────────────────────────────────────────────
+// "Flip text for MS Word (macOS)"
+//
+// Word on macOS draws SVG text left-to-right without running the bidi algorithm, so Hebrew / Arabic
+// shows up mirrored. The fix is to store every line in *visual* order: this function converts a
+// logical line into the order it would be displayed in (right-to-left paragraph):
+//   • Hebrew / Arabic stretches are reversed character by character (brackets are mirrored, and
+//     combining marks stay attached to their letter),
+//   • Latin words, numbers and other left-to-right stretches are kept intact ("big light" stays
+//     "big light"), only their position is swapped,
+//   • lines without any Hebrew / Arabic letter are left exactly as they are.
+// The operation is its own inverse: flipping twice gives the original text back.
+// ─────────────────────────────────────────────
+const RTL_SCRIPT = /[\u0590-\u05FF\uFB1D-\uFB4F\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+const IS_LETTER = /\p{L}/u;
+const IS_DIGIT = /\p{Nd}/u;
+const IS_MARK = /[\p{M}\u200C\u200D]/u;
+const NUMBER_AFFIX = /[%‰‱$¢£¥€₪°#±]/;
 const MIRROR_PAIRS = { '(': ')', ')': '(', '[': ']', ']': '[', '{': '}', '}': '{', '<': '>', '>': '<', '«': '»', '»': '«', '‹': '›', '›': '‹' };
-const mirrorChar = ch => MIRROR_PAIRS[ch] || ch;
 
-export function invertRuns(runs) {
+function charClass(ch) {
+    if (IS_DIGIT.test(ch)) return 'D';                       // numbers always read left-to-right
+    if (IS_LETTER.test(ch)) return RTL_SCRIPT.test(ch) ? 'R' : 'L';
+    return 'N';                                               // spaces, punctuation, symbols
+}
+
+function flipLine(chars) {
+    // 1. clusters: a base character plus the combining marks that follow it
+    const clusters = [];
+    chars.forEach(c => {
+        const last = clusters[clusters.length - 1];
+        if (last && IS_MARK.test(c.ch)) last.chars.push(c);
+        else clusters.push({ chars: [c], cls: charClass(c.ch) });
+    });
+    if (!clusters.some(c => c.cls === 'R')) return chars;       // nothing Hebrew / Arabic → untouched
+
+    // 2. currency / percent signs stick to the number next to them
+    clusters.forEach((c, i) => {
+        if (c.cls === 'N' && NUMBER_AFFIX.test(c.chars[0].ch)
+            && (clusters[i - 1]?.cls === 'D' || clusters[i + 1]?.cls === 'D')) c.cls = 'D';
+    });
+
+    // 3. resolve neutrals: between two strong characters of the same kind they join it,
+    //    otherwise they take the paragraph direction (right-to-left)
+    const strong = cls => (cls === 'R' ? 'R' : 'L');
+    for (let i = 0; i < clusters.length; i++) {
+        if (clusters[i].cls !== 'N') continue;
+        let j = i;
+        while (j < clusters.length && clusters[j].cls === 'N') j++;
+        const left = i === 0 ? 'R' : strong(clusters[i - 1].cls);
+        const right = j === clusters.length ? 'R' : strong(clusters[j].cls);
+        const dir = left === right ? left : 'R';
+        for (let k = i; k < j; k++) clusters[k].dir = dir;
+        i = j - 1;
+    }
+    clusters.forEach(c => { if (!c.dir) c.dir = strong(c.cls); });
+
+    // 4. group into directional segments, then emit them in reverse order
+    const segments = [];
+    clusters.forEach(c => {
+        const last = segments[segments.length - 1];
+        if (last && last.dir === c.dir) last.clusters.push(c);
+        else segments.push({ dir: c.dir, clusters: [c] });
+    });
+    const out = [];
+    segments.reverse().forEach(seg => {
+        const list = seg.dir === 'R' ? [...seg.clusters].reverse() : seg.clusters;
+        list.forEach(c => c.chars.forEach((ch, idx) => {
+            out.push(seg.dir === 'R' && idx === 0 && MIRROR_PAIRS[ch.ch] ? { ...ch, ch: MIRROR_PAIRS[ch.ch] } : ch);
+        }));
+    });
+    return out;
+}
+
+export function flipRunsForWord(runs) {
     if (!runs || !runs.length) return [];
     const lines = [[]];
     runs.forEach(run => {
@@ -53,8 +121,7 @@ export function invertRuns(runs) {
     const out = [];
     lines.forEach((line, i) => {
         if (i > 0) out.push(plainRun('\n'));
-        [...line].reverse().forEach(raw => {
-            const c = { ...raw, ch: mirrorChar(raw.ch) };
+        flipLine(line).forEach(c => {
             const last = out[out.length - 1];
             if (last && last.text !== '\n' && last.bold === c.bold && last.italic === c.italic
                 && last.underline === c.underline && last.color === c.color) {

@@ -1,4 +1,4 @@
-import { hasText, hasHebrewInRuns, invertRuns, splitRunsIntoLines } from './richText.js';
+import { hasText, hasHebrewInRuns, flipRunsForWord, splitRunsIntoLines } from './richText.js';
 import { computeLayout, getColumns, getColumnConfig, getCanvasSize, getMeasureCtx } from './layout.js';
 import { measureRunWidth, measureLineWidth, runFont } from './canvasText.js';
 import { getSmoothControlPoints } from './canvasShapes.js';
@@ -80,7 +80,7 @@ export function buildVectorSVG(state, opts = {}) {
     const advanced = mode === 'advanced';
     const { width: W, height: H } = getCanvasSize(state);
     const mctx = getMeasureCtx();
-    const T = runs => (invertText ? invertRuns(runs) : runs);
+    const T = runs => (invertText ? flipRunsForWord(runs) : runs);
     const layout = computeLayout(state, W, H, { invertText });
     const { pad, pw, ph, mapX, mapY, tLen } = layout;
     const tickFontPx = parseInt(state.tickFontSize) || 15;

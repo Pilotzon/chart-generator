@@ -1,6 +1,6 @@
 import { MAX_COLUMNS } from './constants.js';
 import { defaultColumn } from './defaults.js';
-import { hasText, invertRuns, runsToPlainText, wrapRuns } from './richText.js';
+import { hasText, flipRunsForWord, runsToPlainText, wrapRuns } from './richText.js';
 import { measureRunWidth } from './canvasText.js';
 
 let measureCtx = null;
@@ -52,7 +52,8 @@ export function getColumnConfig(state, index) {
 // ─────────────────────────────────────────────
 export function computeLayout(state, W, H, opts = {}) {
     const mctx = getMeasureCtx();
-    const T = runs => (opts.invertText ? invertRuns(runs) : runs);
+    // flip *after* wrapping, so every wrapped line is converted on its own
+    const flipLineRuns = runs => (opts.invertText ? flipRunsForWord(runs) : runs);
 
     const titleFontPx = parseInt(state.titleFontSize) || 20;
     const subtitleFontPx = parseInt(state.subtitleFontSize) || 16;
@@ -104,8 +105,8 @@ export function computeLayout(state, W, H, opts = {}) {
         if (!hasText(cfg.runs)) return;
         const x0 = left + ((col.from - state.xMin) / span) * plotWidthEstimate;
         const x1 = left + ((col.to - state.xMin) / span) * plotWidthEstimate;
-        const lines = wrapRuns(T(cfg.runs), Math.max(24, x1 - x0 - 12), run =>
-            measureRunWidth(mctx, run, colFontPx, state.columnTitleFont));
+        const lines = wrapRuns(cfg.runs, Math.max(24, x1 - x0 - 12), run =>
+            measureRunWidth(mctx, run, colFontPx, state.columnTitleFont)).map(flipLineRuns);
         const h = lines.length * colLineH;
         columnTitles.push({ index: col.index, x0, x1, lines, height: h, align: cfg.align, placement: cfg.placement });
         if (cfg.placement === 'below') belowH = Math.max(belowH, h);

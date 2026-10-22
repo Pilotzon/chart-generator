@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultColumn, makeDefaultState } from '../src/lib/defaults.js';
 import { getColumns, getColumnConfig, computeLayout } from '../src/lib/layout.js';
-import { textToRuns } from '../src/lib/richText.js';
+import { flipRunsForWord, textToRuns } from '../src/lib/richText.js';
 import { buildVectorSVG } from '../src/lib/svg.js';
 
 const withColumns = (extra = {}) => {
@@ -59,12 +59,50 @@ describe('svg export', () => {
         const svg = buildVectorSVG(makeDefaultState(), { mode: 'classic', background: '#123456' });
         expect(svg).toContain('#123456');
     });
+});
 
-    it('mirrors paired punctuation together with the text', () => {
-        const svg = buildVectorSVG(
-            Object.assign(makeDefaultState(), { titleRuns: textToRuns('(abc) [x]') }),
-            { mode: 'classic', invertText: true }
-        );
-        expect(svg).toContain('[x] (cba)');
+describe('flip text for MS Word (macOS)', () => {
+    const flip = (str) => flipRunsForWord(textToRuns(str)).map(r => r.text).join('');
+
+    it('leaves lines without Hebrew / Arabic untouched', () => {
+        expect(flip('big light')).toBe('big light');
+        expect(flip('(abc) 12.5%')).toBe('(abc) 12.5%');
+    });
+
+    it('reverses Hebrew / Arabic letters', () => {
+        expect(flip('שלום')).toBe('םולש');
+        expect(flip('שלום עולם')).toBe('םלוע םולש');
+        expect(flip('مرحبا')).toBe('ابحرم');
+    });
+
+    it('keeps Latin words and numbers readable inside a Hebrew line', () => {
+        expect(flip('שלום big light')).toBe('big light םולש');
+        expect(flip('אחוז 50%')).toBe('50% זוחא');
+        expect(flip('גרף 1,000 נקודות')).toBe('תודוקנ 1,000 ףרג');
+    });
+
+    it('mirrors brackets that sit in the Hebrew stretch', () => {
+        expect(flip('(שלום)')).toBe('(םולש)');
+        expect(flip('שלום (big) עולם')).toBe('םלוע (big) םולש');
+    });
+
+    it('flips each line separately and keeps combining marks on their letter', () => {
+        expect(flip('שלום\nbig')).toBe('םולש\nbig');
+        expect(flip('שָלום')).toBe('םולשָ');
+    });
+
+    it('is its own inverse', () => {
+        ['שלום big light', 'שלום (big) עולם', 'אחוז 50% מ-100', 'مرحبا world 123', 'a ב c ד e', 'שלום\nעולם big'].forEach(t => {
+            expect(flip(flip(t))).toBe(t);
+        });
+    });
+
+    it('keeps per-character formatting with its character', () => {
+        const runs = [
+            { text: 'אב', bold: true, italic: false, underline: false, color: '#ff0000' },
+            { text: 'ג', bold: false, italic: false, underline: false, color: '#000000' }
+        ];
+        const out = flipRunsForWord(runs);
+        expect(out.map(r => [r.text, r.bold])).toEqual([['ג', false], ['בא', true]]);
     });
 });

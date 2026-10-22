@@ -57,14 +57,14 @@ describe('classic mode', () => {
         expect(q('#graphCanvas').width).toBe(850);
         expect(q('.rail-btn')).toBeNull();
         // classic PNG button exports directly
-        await click(byText('.export-seg', 'PNG'));
+        await click(q('.export-menu > .btn-primary'));
         expect(downloads.map(d => d.name)).toEqual(['graph-studio-export.png']);
     });
 
     it('SVG popup has the invert checkbox above the download button and inverts the preview', async () => {
         await render();
         const before = textCalls().join('|');
-        await click(byText('.export-seg', 'SVG'));
+        await click(q('.export-split-main'));
         const pop = q('.export-popover');
         expect(pop).not.toBeNull();
         const checkbox = q('input[type=checkbox]', pop);
@@ -85,12 +85,27 @@ describe('classic mode', () => {
         expect(q('.export-popover')).toBeNull(); // closes after download
     });
 
+    it('SVG button is one split rectangle: label zone + chevron zone, both open the popup', async () => {
+        await render();
+        const split = q('.export-split');
+        expect(split.children).toHaveLength(2);
+        expect(split.children[0].className).toBe('export-split-main');
+        expect(split.children[1].className).toBe('export-split-chev');
+        expect(byText('.export-bar .btn-primary', 'Export PNG')).not.toBeNull();
+        expect(q('.export-pill')).toBeNull();
+        await click(q('.export-split-chev'));
+        expect(q('.export-popover')).not.toBeNull();
+        expect(q('.export-split').classList.contains('is-open')).toBe(true);
+        await click(q('.export-split-main'));
+        expect(q('.export-popover')).toBeNull();
+    });
+
     it('closes the popup with Escape and on outside click', async () => {
         await render();
-        await click(byText('.export-seg', 'SVG'));
+        await click(q('.export-split-main'));
         await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
         expect(q('.export-popover')).toBeNull();
-        await click(byText('.export-seg', 'SVG'));
+        await click(q('.export-split-main'));
         await mouse(document.body, 'mousedown');
         expect(q('.export-popover')).toBeNull();
     });
@@ -166,9 +181,9 @@ describe('advanced mode', () => {
     it('SVG popup has extra options; PNG popup has resolution/no-margins/background', async () => {
         await render();
         await goAdvanced();
-        await click(byText('.export-seg', 'SVG'));
+        await click(q('.export-split-main'));
         let pop = q('.export-popover');
-        expect(qa('.export-option span', pop).map(n => n.textContent)).toEqual(['Invert text boxes', 'Background']);
+        expect(qa('.export-option span', pop).map(n => n.textContent)).toEqual(['Flip text for MS Word macOS', 'Background']);
         expect(pop.textContent).not.toContain('No margins');
         await click(qa('input[type=checkbox]', pop)[1]);
         expect(q('input[type=color]', pop)).not.toBeNull();
@@ -177,7 +192,7 @@ describe('advanced mode', () => {
         const svg = await blobs.at(-1).text();
                 expect(svg).toContain('<rect'); // background
 
-        await click(byText('.export-seg', 'PNG'));
+        await click(q('.export-menu > .btn-primary'));
         pop = q('.export-popover');
         expect(pop.textContent).toContain('Resolution');
         expect(pop.textContent).toContain('1700 × 1360 px');

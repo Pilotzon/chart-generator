@@ -47,7 +47,7 @@ tests/                      vitest suites
 * **Column titles** (both modes): one column per major X step. Font and size are shared; click a column in the
   little chart sketch and a menu opens below it with a rich-text title (bold / italic / underline / colour),
   alignment (left / center / right), placement (above / below the grid) and an optional background colour with opacity.
-* **Export**: the SVG button opens a popup with *Invert text boxes* (also applied to the preview) above
+* **Export**: the SVG button opens a popup with *Flip text for MS Word macOS* (also applied to the preview) above
   *Download SVG*. In Advanced mode the SVG and PNG popups also offer an optional *Background* colour and, for PNG,
   the resolution (1–4×). Mirrored text also swaps paired punctuation, e.g. `(abc)` → `(cba)`. Shortcuts: Ctrl/Cmd+S → PNG, Ctrl/Cmd+E → SVG.
 * Classic and Advanced workspaces are stored separately in `localStorage`.

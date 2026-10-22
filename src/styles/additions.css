@@ -187,64 +187,65 @@
     min-width: 0;
 }
 
-/* ── Export pill (SVG | PNG) — light version ── */
-.export-bar {
-    background: none;
-    border: none;
-    padding: 0;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-}
+/* ── Export bar: SVG split button (one border, two hover zones) ── */
+.export-bar { align-items: center; }
+.export-bar .btn { gap: 7px; }
 
-.export-pill {
+.export-split {
     display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    padding: 4px;
-    background: #fff;
-    border: 1px solid rgba(60, 56, 46, 0.14);
-    border-radius: 999px;
-    box-shadow: 0 1px 2px rgba(60, 56, 46, 0.06), 0 6px 20px rgba(60, 56, 46, 0.1);
+    align-items: stretch;
+    height: 38px;
+    background: var(--bg-input);
+    border: 1px solid rgba(60, 56, 46, 0.2);
+    border-radius: var(--radius-md);   /* rounded rectangle, not a pill */
+    overflow: hidden;             /* clips the hover zones to the outer corners */
+    transition: border-color 0.15s var(--ease-smooth), box-shadow 0.15s var(--ease-smooth);
 }
 
-.export-pill-divider {
-    width: 1px;
-    height: 18px;
-    background: rgba(60, 56, 46, 0.12);
-}
+.export-split:hover,
+.export-split.is-open { border-color: rgba(60, 56, 46, 0.34); }
+.export-split.is-open { box-shadow: 0 0 0 3px rgba(60, 56, 46, 0.07); }
 
-.export-seg {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    height: 34px;
-    padding: 0 12px 0 14px;
+.export-split-main,
+.export-split-chev {
     border: none;
-    border-radius: 999px;
     background: transparent;
     color: var(--text-primary);
     font-family: var(--ui-font);
-    font-size: 13px;
-    font-weight: 550;
-    letter-spacing: 0.1px;
     cursor: pointer;
-    transition: background 0.15s var(--ease-smooth), color 0.15s var(--ease-smooth), transform 0.1s var(--ease-smooth);
+    transition: background 0.15s var(--ease-smooth);
 }
 
-.export-seg svg { flex-shrink: 0; }
-.export-seg .export-chevron { color: var(--text-tertiary); margin-left: -1px; transition: transform 0.2s var(--ease-smooth); }
-.export-seg:hover { background: rgba(60, 56, 46, 0.07); }
-.export-seg:active { background: rgba(60, 56, 46, 0.12); }
-.export-seg:focus-visible { outline: 2px solid rgba(60, 56, 46, 0.35); outline-offset: 1px; }
+/* large zone on the left */
+.export-split-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 14px 0 14px;
+    font-size: 13.5px;
+    font-weight: 520;
+    letter-spacing: -0.1px;
+}
 
-/* right segment: soft grey filled pill, like the highlighted toggle in the reference */
-.export-seg-alt { background: rgba(60, 56, 46, 0.075); }
-.export-seg-alt:hover { background: rgba(60, 56, 46, 0.13); }
-.export-seg-alt:active { background: rgba(60, 56, 46, 0.18); }
+/* small zone on the right */
+.export-split-chev {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    padding: 0;
+    color: var(--text-tertiary);
+}
 
-.export-seg.is-open { background: rgba(60, 56, 46, 0.14); }
-.export-seg.is-open .export-chevron { transform: rotate(180deg); color: var(--text-primary); }
+.export-split-chev svg { transition: transform 0.2s var(--ease-smooth); }
+.export-split-main:hover,
+.export-split-chev:hover { background: rgba(60, 56, 46, 0.08); }
+.export-split-chev:hover { color: var(--text-primary); }
+.export-split-main:active,
+.export-split-chev:active { background: rgba(60, 56, 46, 0.14); }
+.export-split.is-open .export-split-chev { background: rgba(60, 56, 46, 0.1); color: var(--text-primary); }
+.export-split.is-open .export-split-chev svg { transform: rotate(180deg); }
+.export-split-main:focus-visible,
+.export-split-chev:focus-visible { outline: 2px solid rgba(60, 56, 46, 0.4); outline-offset: -3px; }
 
 /* ── Column sketch ── */
 .col-sketch { display: flex; flex-direction: column; gap: 0; }

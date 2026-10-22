@@ -53,24 +53,35 @@ export function ExportBar() {
 
     return (
         <div className="export-bar">
-          <div className="export-pill">
             <div className="export-menu" ref={svgRef}>
-                <button
-                    type="button"
-                    className={`export-seg ${open === 'svg' ? 'is-open' : ''}`}
-                    aria-haspopup="dialog"
-                    aria-expanded={open === 'svg'}
-                    onClick={() => setOpen(open === 'svg' ? null : 'svg')}
-                >
-                    <IconDownload width={15} height={15} />
-                    SVG
-                    <IconChevronDown className="export-chevron" width={12} height={12} />
-                </button>
+                {/* One bordered button, two hover zones: the wide label zone and the small chevron zone */}
+                <div className={`export-split ${open === 'svg' ? 'is-open' : ''}`}>
+                    <button
+                        type="button"
+                        className="export-split-main"
+                        aria-haspopup="dialog"
+                        aria-expanded={open === 'svg'}
+                        onClick={() => setOpen(open === 'svg' ? null : 'svg')}
+                    >
+                        <IconDownload width={15} height={15} />
+                        SVG
+                    </button>
+                    <button
+                        type="button"
+                        className="export-split-chev"
+                        aria-label="SVG options"
+                        aria-haspopup="dialog"
+                        aria-expanded={open === 'svg'}
+                        onClick={() => setOpen(open === 'svg' ? null : 'svg')}
+                    >
+                        <IconChevronDown width={13} height={13} />
+                    </button>
+                </div>
                 {open === 'svg' && (
                     <ExportPopover title="SVG export" onClose={close} anchorRef={svgRef}>
                         <CheckRow
-                            label="Invert text boxes"
-                            title="Reverse the characters of the title, subtitle, axis and column text boxes (also shown in the preview)"
+                            label="Flip text for MS Word macOS"
+                            title="Pre-flips Hebrew / Arabic text so it reads correctly in MS Word for macOS. Latin words and numbers are not touched. The preview shows the flipped text too."
                             checked={settings.invertText}
                             onChange={setInvert}
                         />
@@ -95,20 +106,19 @@ export function ExportBar() {
                 )}
             </div>
 
-            <span className="export-pill-divider" aria-hidden="true" />
             <div className="export-menu" ref={pngRef}>
                 {advanced ? (
                     <>
                         <button
                             type="button"
-                            className={`export-seg export-seg-alt ${open === 'png' ? 'is-open' : ''}`}
+                            className="btn btn-primary"
                             aria-haspopup="dialog"
                             aria-expanded={open === 'png'}
                             onClick={() => setOpen(open === 'png' ? null : 'png')}
                         >
                             <IconDownload width={15} height={15} />
                             PNG
-                            <IconChevronDown className="export-chevron" width={12} height={12} />
+                            <IconChevronDown width={12} height={12} />
                         </button>
                         {open === 'png' && (
                             <ExportPopover title="PNG export" onClose={close} anchorRef={pngRef}>
@@ -140,13 +150,12 @@ export function ExportBar() {
                         )}
                     </>
                 ) : (
-                    <button type="button" className="export-seg export-seg-alt" onClick={doPNG}>
+                    <button type="button" className="btn btn-primary" onClick={doPNG}>
                         <IconDownload width={15} height={15} />
-                        PNG
+                        Export PNG
                     </button>
                 )}
             </div>
-          </div>
         </div>
     );
 }

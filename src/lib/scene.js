@@ -1,4 +1,4 @@
-import { detectDirection, hasText, hasHebrewInRuns, invertRuns, hexToRgb } from './richText.js';
+import { detectDirection, hasText, hasHebrewInRuns, flipRunsForWord, hexToRgb } from './richText.js';
 import { computeLayout, getColumns, getColumnConfig } from './layout.js';
 import { drawRichLine, drawRichLines, drawRichText } from './canvasText.js';
 import { splitRunsIntoLines } from './richText.js';
@@ -24,7 +24,7 @@ export function drawScene(ctx, state, opts) {
     const clickTargets = [];
     const layout = computeLayout(state, W, H, { invertText });
     const { pad, pw, ph, mapX, mapY, tLen } = layout;
-    const T = runs => (invertText ? invertRuns(runs) : runs);
+    const T = runs => (invertText ? flipRunsForWord(runs) : runs);
     const registerHitbox = (key, x, y, w, h) => clickTargets.push({ key, x, y, w, h });
 
     ctx.clearRect(0, 0, W, H);
