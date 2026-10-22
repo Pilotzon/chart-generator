@@ -127,3 +127,112 @@ describe('Y axis title placement', () => {
         expect(computeLayout(s, 850, 680).pad.left).toBeLessThan(withTicks);
     });
 });
+
+describe('line margins', () => {
+    it('keeps the axis values inside a margin without touching the scale', () => {
+        const s = makeDefaultState();
+        const plain = computeLayout(s, 850, 680);
+        s.plotMarginX = 20; s.plotMarginY = 10;
+        const l = computeLayout(s, 850, 680);
+        expect(l.mapX(s.xMin)).toBeCloseTo(l.pad.left + 20, 5);
+        expect(l.mapX(s.xMax)).toBeCloseTo(l.pad.left + l.pw - 20, 5);
+        expect(l.mapY(s.yMin)).toBeCloseTo(l.pad.top + l.ph - 10, 5);
+        expect(l.mapY(s.yMax)).toBeCloseTo(l.pad.top + 10, 5);
+        expect(l.pw).toBeCloseTo(plain.pw, 5);                       // the frame itself does not move
+        expect(l.unmapX(l.mapX(33))).toBeCloseTo(33, 5);
+        expect(l.unmapY(l.mapY(41))).toBeCloseTo(41, 5);
+        // first / last column backgrounds still reach the frame
+        expect(l.mapEdgeX(s.xMin)).toBe(l.pad.left);
+        expect(l.mapEdgeX(s.xMax)).toBe(l.pad.left + l.pw);
+    });
+
+    it('has no margin by default', () => {
+        const s = makeDefaultState();
+        const l = computeLayout(s, 850, 680);
+        expect(l.mapX(s.xMin)).toBeCloseTo(l.pad.left, 6);
+        expect(l.mapY(s.yMax)).toBeCloseTo(l.pad.top, 6);
+    });
+});
+
+describe('axis title placement', () => {
+    const base = () => {
+        const s = makeDefaultState();
+        s.xLabelRuns = textToRuns('Time');
+        s.yLabelRuns = textToRuns('Temperature');
+        return s;
+    };
+
+    it('X title at the axis end frees the space below the axis and sits inside, right-aligned', () => {
+        const s = base();
+        const below = computeLayout(s, 850, 680);
+        s.xLabelPlacement = 'end';
+        const end = computeLayout(s, 850, 680);
+        expect(end.pad.bottom).toBeLessThan(below.pad.bottom);
+        expect(end.ph).toBeGreaterThan(below.ph);
+        expect(end.xLabel.anchor).toBe('right');
+        expect(end.xLabel.x).toBeCloseTo(end.pad.left + end.pw, 5);
+        expect(end.xLabel.y).toBeLessThan(end.pad.top + end.ph);          // above the axis line
+    });
+
+    it('Y title above the axis frees the left side, is centred over the axis and fits the canvas', () => {
+        const s = base();
+        const side = computeLayout(s, 850, 680);
+        s.yLabelPlacement = 'above';
+        const above = computeLayout(s, 850, 680);
+        expect(above.pad.left).toBeLessThan(side.pad.left);
+        expect(above.pad.top).toBeGreaterThan(side.pad.top);               // room for the title above
+        expect(above.yLabel.placement).toBe('above');
+        expect(above.yLabel.x).toBe(above.pad.left);
+        expect(above.yLabel.y + 18 * 1.35).toBeLessThanOrEqual(above.pad.top);
+        // a long title never sticks out on the left
+        s.yLabelRuns = textToRuns('A very long horizontal Y axis title that is wider than the margin');
+        const long = computeLayout(s, 850, 680);
+        expect(long.pad.left).toBeGreaterThan(40);
+        expect(long.pad.left - 7 * 'A very long horizontal Y axis title that is wider than the margin'.length / 2).toBeGreaterThan(0);
+    });
+
+    it('SVG places the titles where the layout says', () => {
+        const s = base();
+        s.xLabelPlacement = 'end';
+        s.yLabelPlacement = 'above';
+        const svg = buildVectorSVG(s, { mode: 'classic' });
+        expect(svg).toContain('text-anchor="end"');
+        expect(svg).not.toContain('rotate(-90)');
+    });
+});
+
+describe('line clipping and the long triangle arrow', () => {
+    it('SVG cuts the data line at the plot area', () => {
+        const s = makeDefaultState();
+        const svg = buildVectorSVG(s, { mode: 'classic' });
+        expect(svg).toContain('<clipPath id="plot-clip">');
+        expect(svg).toContain('clip-path="url(#plot-clip)"');
+    });
+
+    it('the clip rectangle stays inside the visible border lines', () => {
+        const s = makeDefaultState();
+        const l = computeLayout(s, 850, 680);
+        expect(l.clip.x).toBeGreaterThan(l.pad.left);
+        expect(l.clip.x + l.clip.w).toBeLessThan(l.pad.left + l.pw);
+        s.borderLeft = false;
+        expect(computeLayout(s, 850, 680).clip.x).toBe(l.pad.left);
+    });
+
+    it('long triangle is longer and very slightly narrower than the triangle', () => {
+        const s = makeDefaultState();
+        s.showAxisArrows = true;
+        s.axisArrowStyle = 'long-triangle';
+        const poly = (style) => {
+            s.axisArrowStyle = style;
+            const svg = buildVectorSVG(s, { mode: 'advanced' });
+            const m = svg.match(/<polygon points="([^"]+)" fill="#000000"\/>/);
+            return m[1].split(' ').map(p => p.split(',').map(Number));
+        };
+        const tri = poly('triangle'), long = poly('long-triangle');
+        const length = pts => Math.abs(pts[1][0] - pts[0][0]);
+        const width = pts => Math.abs(pts[2][1] - pts[1][1]);
+        expect(length(long)).toBeGreaterThan(length(tri));
+        expect(width(long)).toBeLessThan(width(tri));
+        expect(width(long)).toBeGreaterThan(width(tri) * 0.85);              // "very subtle"
+    });
+});

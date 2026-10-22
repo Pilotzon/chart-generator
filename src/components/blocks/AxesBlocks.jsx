@@ -18,6 +18,14 @@ function AxisScale({ axis }) {
             </Row>
             <StepperRow label="Major Step" step={1} inputStep={0.1} min={0.1} value={state[k('Step')]} onChange={v => set(k('Step'), v)} />
             <StepperRow label="Subdivisions" min={1} max={10} value={state[k('SubDiv')]} onChange={v => set(k('SubDiv'), v)} />
+            <StepperRow
+                label="Line Margin (px)"
+                min={0}
+                max={120}
+                step={2}
+                value={state['plotMargin' + axis.toUpperCase()] || 0}
+                onChange={v => set('plotMargin' + axis.toUpperCase(), v)}
+            />
         </>
     );
 }

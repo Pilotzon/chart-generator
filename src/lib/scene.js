@@ -22,7 +22,7 @@ export function drawScene(ctx, state, opts) {
     const { mode, width: W, height: H, view = {}, invertText = false, background = null } = opts;
     const advanced = mode === 'advanced';
     const clickTargets = [];
-    const layout = computeLayout(state, W, H, { invertText });
+    const layout = computeLayout(state, W, H, { invertText, advanced });
     const { pad, pw, ph, mapX, mapY, tLen } = layout;
     const T = runs => (invertText ? flipRunsForWord(runs) : runs);
     const registerHitbox = (key, x, y, w, h) => clickTargets.push({ key, x, y, w, h });
@@ -48,7 +48,7 @@ export function drawScene(ctx, state, opts) {
     getColumns(state).forEach(col => {
         const cfg = getColumnConfig(state, col.index);
         if (!cfg.bgEnabled) return;
-        const x0 = mapX(col.from), x1 = mapX(col.to);
+        const x0 = layout.mapEdgeX(col.from), x1 = layout.mapEdgeX(col.to);
         ctx.save();
         ctx.globalAlpha = Math.max(0, Math.min(1, parseFloat(cfg.bgOpacity)));
         ctx.fillStyle = cfg.bgColor;
@@ -188,15 +188,15 @@ export function drawScene(ctx, state, opts) {
         registerHitbox(`col:${ct.index}`, ct.x0, startY - 3, ct.x1 - ct.x0, ct.height + 6);
     });
 
-    // ── Axis labels
+    // ── Axis labels (placement comes from the layout: X below / at the axis end, Y beside / above the axis)
     const xRuns = T(state.xLabelRuns);
     if (hasText(xRuns)) {
         const lineH = axisFontPx * 1.35;
-        const startY = pad.top + ph + tLen + layout.tickBlockH + 14 + layout.belowBlock;
-        const cx = pad.left + pw / 2;
+        const { x: lx, y: ly, anchor: lAnchor } = layout.xLabel;
         ctx.textBaseline = 'top';
-        const n = drawRichText(ctx, xRuns, cx, startY, axisFontPx, state.axisFont, 'center', hasHebrewInRuns(xRuns), lineH);
-        registerHitbox('xLabel', cx - 200, startY - 5, 400, n * lineH + 10);
+        const n = drawRichText(ctx, xRuns, lx, ly, axisFontPx, state.axisFont, lAnchor, hasHebrewInRuns(xRuns), lineH);
+        const hx = lAnchor === 'right' ? lx - 400 : lx - 200;
+        registerHitbox('xLabel', hx, ly - 5, 400, n * lineH + 10);
     }
     const yRuns = T(state.yLabelRuns);
     if (hasText(yRuns)) {
@@ -204,18 +204,25 @@ export function drawScene(ctx, state, opts) {
         const lineH = axisFontPx * 1.35;
         const linesArr = splitRunsIntoLines(yRuns);
         const totalH = linesArr.length * lineH;
-        const xPos = layout.yLabelX;
-        const cy = pad.top + ph / 2;
-        ctx.save();
-        ctx.translate(xPos, cy);
-        ctx.rotate(-Math.PI / 2);
-        ctx.textBaseline = 'middle';
-        linesArr.forEach((ln, i) => {
-            const yOff = (i - (linesArr.length - 1) / 2) * lineH;
-            drawRichLine(ctx, ln, 0, yOff, axisFontPx, state.axisFont, 'center', isRtl);
-        });
-        ctx.restore();
-        registerHitbox('yLabel', xPos - 18, cy - totalH / 2, 36, totalH);
+        if (layout.yLabel.placement === 'above') {
+            const { x: lx, y: ly } = layout.yLabel;
+            ctx.textBaseline = 'top';
+            drawRichText(ctx, yRuns, lx, ly, axisFontPx, state.axisFont, 'center', isRtl, lineH);
+            registerHitbox('yLabel', lx - 200, ly - 5, 400, totalH + 10);
+        } else {
+            const xPos = layout.yLabelX;
+            const cy = pad.top + ph / 2;
+            ctx.save();
+            ctx.translate(xPos, cy);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textBaseline = 'middle';
+            linesArr.forEach((ln, i) => {
+                const yOff = (i - (linesArr.length - 1) / 2) * lineH;
+                drawRichLine(ctx, ln, 0, yOff, axisFontPx, state.axisFont, 'center', isRtl);
+            });
+            ctx.restore();
+            registerHitbox('yLabel', xPos - 18, cy - totalH / 2, 36, totalH);
+        }
     }
 
     // ── Charts
@@ -268,6 +275,11 @@ export function drawScene(ctx, state, opts) {
         // Line
         const lineColor = chart.lineColor;
         if (showLine && linePts.length >= 2) {
+            // the line (and its arrow heads) are cut at the axes instead of running over them
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(layout.clip.x, layout.clip.y, layout.clip.w, layout.clip.h);
+            ctx.clip();
             ctx.strokeStyle = lineColor;
             ctx.lineWidth = chart.lineWidth;
             ctx.lineJoin = 'round';
@@ -285,6 +297,7 @@ export function drawScene(ctx, state, opts) {
                     drawArrowHead(ctx, first.px, first.py, Math.atan2(first.py - second.py, first.px - second.px), aSize, chart.arrowStart, lineColor);
                 }
             }
+            ctx.restore();
         }
 
         // Markers

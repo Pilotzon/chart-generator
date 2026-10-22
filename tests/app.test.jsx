@@ -376,6 +376,44 @@ describe('advanced sketches', () => {
     });
 });
 
+describe('axis titles, margins and arrows (UI)', () => {
+    const dropdownRow = (text) => qa('.control-row').find(r => r.querySelector(':scope > label')?.textContent === text);
+    const pick = async (row, itemText) => {
+        await click(row.querySelector('.dropdown-trigger'));
+        await click(byText('.portal-dropdown-menu .dropdown-item', itemText));
+    };
+
+    it('axis title positions can be changed in classic mode too', async () => {
+        await render();
+        await click(byText('.group-title-text', 'Titles & Labels'));
+        await pick(dropdownRow('X Label Position'), 'At the axis end');
+        await pick(dropdownRow('Y Label Position'), 'Above the axis');
+        const st = stored('GRAPH_STUDIO_PRO_V13_CLASSIC');
+        expect(st.xLabelPlacement).toBe('end');
+        expect(st.yLabelPlacement).toBe('above');
+        expect(q('#graphCanvas').width).toBe(850);
+    });
+
+    it('line margin steppers live in the axis scale settings', async () => {
+        await render();
+        await click(byText('.group-title-text', 'Axes & Grid'));
+        const rows = qa('.control-row').filter(r => r.textContent.includes('Line Margin'));
+        expect(rows).toHaveLength(2);
+        await click(rows[0].querySelectorAll('.stepper-btn')[1]);
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').plotMarginX).toBe(2);
+    });
+
+    it('long triangle is offered for the axis arrows and the line ends (advanced)', async () => {
+        await render();
+        await goAdvanced();
+        await click(q('.rail-btn[data-panel="axes"]'));
+        const toggle = qa('.control-row').find(r => r.textContent.includes('Show Arrows')).querySelector('input');
+        await click(toggle);
+        await pick(dropdownRow('Style'), 'Long triangle');
+        expect(stored('GRAPH_STUDIO_PRO_V13_ADVANCED').axisArrowStyle).toBe('long-triangle');
+    });
+});
+
 describe('selection toolbar and quick edit', () => {
     it('hit-tests title clicks on the canvas and saves the quick edit', async () => {
         await render();

@@ -1,10 +1,10 @@
 import { useApp } from '../../context/AppContext.jsx';
 import { useSettings } from '../../hooks/useSettings.js';
-import { TITLE_POSITION_OPTIONS, LEGEND_POSITION_OPTIONS } from '../../lib/options.js';
+import { TITLE_POSITION_OPTIONS, LEGEND_POSITION_OPTIONS, X_LABEL_PLACEMENT_OPTIONS, Y_LABEL_PLACEMENT_OPTIONS } from '../../lib/options.js';
 import { runsToPlainText, textToRuns } from '../../lib/richText.js';
 import { RichTextEditor } from '../richtext/RichTextEditor.jsx';
 import {
-    AlignRow, ColorRow, Divider, FontRow, Reveal, SectionLabel, StepperRow, ToggleRow
+    AlignRow, ColorRow, Divider, DropdownRow, FontRow, Reveal, SectionLabel, StepperRow, ToggleRow
 } from '../controls/Inputs.jsx';
 import { PositionSketch } from '../controls/Sketches.jsx';
 import { IconPlus } from '../controls/Icons.jsx';
@@ -76,7 +76,9 @@ export function AxisLabelsBlock() {
     return (
         <>
             <RichField label="X-Axis Label" editorKey="xLabel" runs={state.xLabelRuns} />
+            <DropdownRow label="X Label Position" value={state.xLabelPlacement || 'below'} options={X_LABEL_PLACEMENT_OPTIONS} onChange={v => set('xLabelPlacement', v)} />
             <RichField label="Y-Axis Label" editorKey="yLabel" runs={state.yLabelRuns} />
+            <DropdownRow label="Y Label Position" value={state.yLabelPlacement || 'side'} options={Y_LABEL_PLACEMENT_OPTIONS} onChange={v => set('yLabelPlacement', v)} />
             <FontRow label="Label Font" value={state.axisFont} onChange={v => set('axisFont', v)} />
             <StepperRow label="Label Size" min={8} max={36} value={state.axisFontSize} onChange={v => set('axisFontSize', v)} />
         </>

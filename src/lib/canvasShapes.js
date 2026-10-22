@@ -76,6 +76,9 @@ export function roundRect(ctx, x, y, w, h, r) {
     ctx.closePath();
 }
 
+// Proportions of the "long triangle" arrow (relative to the arrow size); the plain triangle is 1 × 0.45
+export const LONG_TRIANGLE = { length: 1.35, half: 0.42 };
+
 export function drawArrowHead(ctx, x, y, angle, size, style, color) {
     ctx.save();
     ctx.translate(x, y);
@@ -98,6 +101,14 @@ export function drawArrowHead(ctx, x, y, angle, size, style, color) {
             ctx.moveTo(0, 0);
             ctx.lineTo(-size, -size * 0.45);
             ctx.lineTo(-size, size * 0.45);
+            ctx.closePath();
+            ctx.fill();
+            break;
+        case 'long-triangle':   // a bit longer than the triangle and very slightly narrower
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-size * LONG_TRIANGLE.length, -size * LONG_TRIANGLE.half);
+            ctx.lineTo(-size * LONG_TRIANGLE.length, size * LONG_TRIANGLE.half);
             ctx.closePath();
             ctx.fill();
             break;

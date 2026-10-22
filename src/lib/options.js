@@ -3,6 +3,7 @@ export const ARROW_OPTIONS = [
     { value: 'none', label: 'None' },
     { value: 'arrow', label: 'Arrow' },
     { value: 'triangle', label: 'Triangle' },
+    { value: 'long-triangle', label: 'Long triangle' },
     { value: 'stealth', label: 'Stealth' },
     { value: 'circle', label: 'Circle' }
 ];
@@ -21,6 +22,17 @@ export const TITLE_POSITION_OPTIONS = [
     { value: 'top-left', label: 'Left', icon: 'top-left' },
     { value: 'top-center', label: 'Center', icon: 'top-center' },
     { value: 'top-right', label: 'Right', icon: 'top-right' }
+];
+
+// Axis titles: where they sit relative to their axis
+export const X_LABEL_PLACEMENT_OPTIONS = [
+    { value: 'below', label: 'Below the axis' },
+    { value: 'end', label: 'At the axis end' }
+];
+
+export const Y_LABEL_PLACEMENT_OPTIONS = [
+    { value: 'side', label: 'Beside the axis' },
+    { value: 'above', label: 'Above the axis' }
 ];
 
 export const GRID_STYLE_OPTIONS = [

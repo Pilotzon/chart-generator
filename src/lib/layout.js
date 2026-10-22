@@ -1,6 +1,6 @@
 import { MAX_COLUMNS } from './constants.js';
 import { defaultColumn } from './defaults.js';
-import { hasText, flipRunsForWord, runsToPlainText, wrapRuns } from './richText.js';
+import { hasText, flipRunsForWord, runsToPlainText, splitRunsIntoLines, wrapRuns } from './richText.js';
 import { measureRunWidth } from './canvasText.js';
 
 let measureCtx = null;
@@ -85,7 +85,15 @@ export function computeLayout(state, W, H, opts = {}) {
     if (subtitleLines > 0) top += subtitleLines * (subtitleFontPx * 1.4) + 4;
     top += 15;
 
-    let bottom = tLen + tickBlockH + 15 + xLines * (axisFontPx * 1.4) + (hasX ? 20 : 5);
+    // Axis title placement: X → 'below' the axis (default) or 'end' (inside, above the right end of the axis);
+    // Y → 'side' (rotated, left of the axis, default) or 'above' (horizontal, centred over the axis).
+    const xPlacement = state.xLabelPlacement === 'end' ? 'end' : 'below';
+    const yPlacement = state.yLabelPlacement === 'above' ? 'above' : 'side';
+    const xBelow = hasX && xPlacement === 'below';
+    const yBeside = hasY && yPlacement === 'side';
+    const yAbove = hasY && yPlacement === 'above';
+
+    let bottom = tLen + tickBlockH + 15 + (xBelow ? xLines * (axisFontPx * 1.4) : 0) + (xBelow ? 20 : 5);
 
     // Width of the widest Y tick number (measured), so the Y title can sit right next to them
     let yTickW = 0;
@@ -98,29 +106,41 @@ export function computeLayout(state, W, H, opts = {}) {
         yTickW = Math.max(...values.map(v => mctx.measureText(tickStr(v)).width));
     }
     const yTickGap = tickLabels ? 6 : 0;                     // between the tick numbers and the tick marks
-    const yLabelBlockW = yLines * (axisFontPx * 1.35);
+    const yLabelBlockW = yBeside ? yLines * (axisFontPx * 1.35) : 0;
     const yLabelGap = 6;                                     // between the Y title and the tick numbers
     const yLabelEdge = 6;                                    // between the canvas edge and the Y title
-    const left = hasY
+    // a horizontal Y title centred over the axis must not stick out of the canvas on the left
+    let yAboveW = 0;
+    if (yAbove) {
+        yAboveW = Math.max(...splitRunsIntoLines(state.yLabelRuns).map(line =>
+            line.reduce((sum, run) => sum + measureRunWidth(mctx, run, axisFontPx, state.axisFont), 0)));
+    }
+    const left = yBeside
         ? yLabelEdge + yLabelBlockW + yLabelGap + yTickW + yTickGap + tLen
-        : Math.max(40, yTickW + yTickGap + tLen + 10);
+        : Math.max(40, yTickW + yTickGap + tLen + 10, yAbove ? yAboveW / 2 + yLabelEdge : 0);
     const yLabelX = left - tLen - yTickGap - yTickW - yLabelGap - yLabelBlockW / 2;
     const right = 40;
 
     top = Math.max((hasTitle || hasSub) ? 80 : 40, top);
-    bottom = Math.max(hasX ? 80 : 50, bottom);
+    bottom = Math.max(xBelow ? 80 : 50, bottom);
 
     // ── Column titles: wrapped to their column width; they reserve room above / below the grid
+    // Margin between the frame and the data range (the axis values keep their positions relative to each other)
+    const mX = Math.max(0, parseFloat(state.plotMarginX) || 0);
+    const mY = Math.max(0, parseFloat(state.plotMarginY) || 0);
     const plotWidthEstimate = W - left - right;
+    const innerWidthEstimate = Math.max(1, plotWidthEstimate - 2 * mX);
     const span = state.xMax - state.xMin;
+    const estX = v => (v <= state.xMin ? left : v >= state.xMax ? left + plotWidthEstimate
+        : left + mX + ((v - state.xMin) / span) * innerWidthEstimate);
     const colLineH = colFontPx * 1.35;
     const columnTitles = [];
     let aboveH = 0, belowH = 0;
     getColumns(state).forEach(col => {
         const cfg = getColumnConfig(state, col.index);
         if (!hasText(cfg.runs)) return;
-        const x0 = left + ((col.from - state.xMin) / span) * plotWidthEstimate;
-        const x1 = left + ((col.to - state.xMin) / span) * plotWidthEstimate;
+        const x0 = estX(col.from);
+        const x1 = estX(col.to);
         const lines = wrapRuns(cfg.runs, Math.max(24, x1 - x0 - 12), run =>
             measureRunWidth(mctx, run, colFontPx, state.columnTitleFont)).map(flipLineRuns);
         const h = lines.length * colLineH;
@@ -131,8 +151,14 @@ export function computeLayout(state, W, H, opts = {}) {
     const aboveBlock = aboveH > 0 ? aboveH + 8 : 0;
     const belowBlock = belowH > 0 ? belowH + 8 : 0;
 
+    // Y title above the axis: sits over the column titles (and over the axis arrow, if any)
+    const arrowOn = !!(opts.advanced && state.showAxisArrows && state.arrowLeft && state.borderLeft);
+    const arrowReach = arrowOn ? (parseFloat(state.axisArrowSize) || 14) * 1.4 + 2 : 0;
+    const yAboveH = yAbove ? yLines * (axisFontPx * 1.35) : 0;
+    const yAboveBlock = yAbove ? yAboveH + 8 + Math.max(0, arrowReach - aboveBlock) : 0;
+
     const pad = {
-        top: top + aboveBlock,
+        top: top + aboveBlock + yAboveBlock,
         right,
         bottom: bottom + belowBlock,
         left
@@ -142,14 +168,37 @@ export function computeLayout(state, W, H, opts = {}) {
     const ph = H - pad.top - pad.bottom;
     const xRange = state.xMax - state.xMin;
     const yRange = state.yMax - state.yMin;
+    const mXc = Math.min(mX, Math.max(0, pw / 2 - 1));
+    const mYc = Math.min(mY, Math.max(0, ph / 2 - 1));
+    const innerW = pw - 2 * mXc;
+    const innerH = ph - 2 * mYc;
+
+    // Where the axis titles go (top-left corner of the text block; `anchor` is the text alignment)
+    const arrowBottomHalf = (opts.advanced && state.showAxisArrows && state.arrowBottom && state.borderBottom)
+        ? (parseFloat(state.axisArrowSize) || 14) * 0.5 : 0;
+    const xBlockH = xLines * (axisFontPx * 1.35);
+    const xLabel = xPlacement === 'end'
+        ? { placement: 'end', anchor: 'right', x: pad.left + pw, y: pad.top + ph - 6 - arrowBottomHalf - xBlockH }
+        : { placement: 'below', anchor: 'center', x: pad.left + pw / 2, y: pad.top + ph + tLen + tickBlockH + 14 + belowBlock };
+    const yLabel = yPlacement === 'above'
+        ? { placement: 'above', anchor: 'center', x: pad.left, y: pad.top - aboveBlock - Math.max(0, arrowReach - aboveBlock) - 4 - yAboveH }
+        : { placement: 'side', x: yLabelX, y: pad.top + ph / 2 };
 
     return {
-        pad, pw, ph, W, H, tLen, tickBlockH, yLabelX,
+        pad, pw, ph, W, H, tLen, tickBlockH, yLabelX, xLabel, yLabel,
+        // clip rectangle for the data lines: the plot area, minus half of every visible border line
+        clip: (() => {
+            const bw = (parseFloat(state.borderWidth) || 1.5) / 2;
+            const l = state.borderLeft ? bw : 0, r = state.borderRight ? bw : 0;
+            const t = state.borderTop ? bw : 0, b = state.borderBottom ? bw : 0;
+            return { x: pad.left + l, y: pad.top + t, w: pw - l - r, h: ph - t - b };
+        })(),
+        mapEdgeX: x => (x <= state.xMin ? pad.left : x >= state.xMax ? pad.left + pw : pad.left + mXc + ((x - state.xMin) / xRange) * innerW),
         aboveBlock, belowBlock, colLineH, colFontPx,
         columnTitles,
-        mapX: x => pad.left + ((x - state.xMin) / xRange) * pw,
-        mapY: y => pad.top + ph - ((y - state.yMin) / yRange) * ph,
-        unmapX: px => state.xMin + ((px - pad.left) / pw) * xRange,
-        unmapY: py => state.yMin + ((pad.top + ph - py) / ph) * yRange
+        mapX: x => pad.left + mXc + ((x - state.xMin) / xRange) * innerW,
+        mapY: y => pad.top + ph - mYc - ((y - state.yMin) / yRange) * innerH,
+        unmapX: px => state.xMin + ((px - pad.left - mXc) / innerW) * xRange,
+        unmapY: py => state.yMin + ((pad.top + ph - mYc - py) / innerH) * yRange
     };
 }

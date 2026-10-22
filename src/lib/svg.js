@@ -1,7 +1,7 @@
 import { hasText, hasHebrewInRuns, flipRunsForWord, splitRunsIntoLines } from './richText.js';
 import { computeLayout, getColumns, getColumnConfig, getCanvasSize, getMeasureCtx } from './layout.js';
 import { measureRunWidth, measureLineWidth, runFont } from './canvasText.js';
-import { getSmoothControlPoints } from './canvasShapes.js';
+import { getSmoothControlPoints, LONG_TRIANGLE } from './canvasShapes.js';
 import { anchorToPointIndex, markKeyFor, sortedPoints, getLegendCharts } from './points.js';
 
 const escXml = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -59,6 +59,10 @@ function buildSvgArrowHead(x, y, angle, size, style, color) {
             const p1 = rot(-size, -size * 0.45), p2 = rot(-size, size * 0.45);
             return `<polygon points="${x.toFixed(2)},${y.toFixed(2)} ${p1.x},${p1.y} ${p2.x},${p2.y}" fill="${escXml(color)}"/>\n`;
         }
+        case 'long-triangle': {
+            const p1 = rot(-size * LONG_TRIANGLE.length, -size * LONG_TRIANGLE.half), p2 = rot(-size * LONG_TRIANGLE.length, size * LONG_TRIANGLE.half);
+            return `<polygon points="${x.toFixed(2)},${y.toFixed(2)} ${p1.x},${p1.y} ${p2.x},${p2.y}" fill="${escXml(color)}"/>\n`;
+        }
         case 'stealth': {
             const p1 = rot(-size, -size * 0.45), p2 = rot(-size * 0.55, 0), p3 = rot(-size, size * 0.45);
             return `<polygon points="${x.toFixed(2)},${y.toFixed(2)} ${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}" fill="${escXml(color)}"/>\n`;
@@ -81,7 +85,7 @@ export function buildVectorSVG(state, opts = {}) {
     const { width: W, height: H } = getCanvasSize(state);
     const mctx = getMeasureCtx();
     const T = runs => (invertText ? flipRunsForWord(runs) : runs);
-    const layout = computeLayout(state, W, H, { invertText });
+    const layout = computeLayout(state, W, H, { invertText, advanced });
     const { pad, pw, ph, mapX, mapY, tLen } = layout;
     const tickFontPx = parseInt(state.tickFontSize) || 15;
     const axisFontPx = parseInt(state.axisFontSize) || 18;
@@ -97,7 +101,7 @@ export function buildVectorSVG(state, opts = {}) {
     getColumns(state).forEach(col => {
         const cfg = getColumnConfig(state, col.index);
         if (!cfg.bgEnabled) return;
-        const x0 = mapX(col.from), x1 = mapX(col.to);
+        const x0 = layout.mapEdgeX(col.from), x1 = layout.mapEdgeX(col.to);
         const op = Math.max(0, Math.min(1, parseFloat(cfg.bgOpacity)));
         svg += `<rect x="${x0.toFixed(2)}" y="${pad.top.toFixed(2)}" width="${(x1 - x0).toFixed(2)}" height="${ph.toFixed(2)}" fill="${escXml(cfg.bgColor)}" fill-opacity="${op}"/>\n`;
     });
@@ -205,32 +209,39 @@ export function buildVectorSVG(state, opts = {}) {
         svg += buildSvgRichLines(mctx, ct.lines, x, startY + layout.colFontPx * 0.82, layout.colFontPx, state.columnTitleFont, anchor, isRtl, layout.colLineH);
     });
 
-    // Axis labels
+    // Axis labels (placement comes from the layout: X below / at the axis end, Y beside / above the axis)
     const xRuns = T(state.xLabelRuns);
     if (hasText(xRuns)) {
         const lineH = axisFontPx * 1.35;
-        const startY = pad.top + ph + tLen + layout.tickBlockH + 14 + layout.belowBlock + axisFontPx * 0.82;
-        svg += buildSvgRichLines(mctx, splitRunsIntoLines(xRuns), pad.left + pw / 2, startY, axisFontPx, state.axisFont, 'middle', hasHebrewInRuns(xRuns), lineH);
+        const { x: lx, y: ly, anchor: lAnchor } = layout.xLabel;
+        svg += buildSvgRichLines(mctx, splitRunsIntoLines(xRuns), lx, ly + axisFontPx * 0.82, axisFontPx, state.axisFont, lAnchor === 'right' ? 'end' : 'middle', hasHebrewInRuns(xRuns), lineH);
     }
     const yRuns = T(state.yLabelRuns);
     if (hasText(yRuns)) {
         const isRtl = hasHebrewInRuns(yRuns);
         const lineH = axisFontPx * 1.35;
         const lines = splitRunsIntoLines(yRuns);
-        svg += `<g transform="translate(${layout.yLabelX},${pad.top + ph / 2}) rotate(-90)">\n`;
-        lines.forEach((line, li) => {
-            const yOff = (li - (lines.length - 1) / 2) * lineH;
-            let cursor = -measureLineWidth(mctx, line, axisFontPx, state.axisFont) / 2;
-            (isRtl ? [...line].reverse() : line).forEach(run => {
-                const w = measureRunWidth(mctx, run, axisFontPx, state.axisFont);
-                svg += '  ' + svgTextEl(run, cursor, yOff, axisFontPx, state.axisFont, 'central');
-                cursor += w;
+        if (layout.yLabel.placement === 'above') {
+            const { x: lx, y: ly } = layout.yLabel;
+            svg += buildSvgRichLines(mctx, lines, lx, ly + axisFontPx * 0.82, axisFontPx, state.axisFont, 'middle', isRtl, lineH);
+        } else {
+            svg += `<g transform="translate(${layout.yLabelX},${pad.top + ph / 2}) rotate(-90)">\n`;
+            lines.forEach((line, li) => {
+                const yOff = (li - (lines.length - 1) / 2) * lineH;
+                let cursor = -measureLineWidth(mctx, line, axisFontPx, state.axisFont) / 2;
+                (isRtl ? [...line].reverse() : line).forEach(run => {
+                    const w = measureRunWidth(mctx, run, axisFontPx, state.axisFont);
+                    svg += '  ' + svgTextEl(run, cursor, yOff, axisFontPx, state.axisFont, 'central');
+                    cursor += w;
+                });
             });
-        });
-        svg += '</g>\n';
+            svg += '</g>\n';
+        }
     }
 
-    // Charts
+    // Charts (the line itself is cut at the axes)
+    const { clip } = layout;
+    svg += `<clipPath id="plot-clip"><rect x="${clip.x.toFixed(2)}" y="${clip.y.toFixed(2)}" width="${clip.w.toFixed(2)}" height="${clip.h.toFixed(2)}"/></clipPath>\n`;
     state.charts.forEach(chart => {
         if (chart.points.length === 0) return;
         const tension = parseFloat(chart.lineTension) || 0;
@@ -240,6 +251,7 @@ export function buildVectorSVG(state, opts = {}) {
         const sz = parseFloat(chart.markerSize);
 
         if (showLine && linePts.length >= 2) {
+            svg += '<g clip-path="url(#plot-clip)">\n';
             svg += `<path d="${buildSplinePathD(linePts, tension)}" fill="none" stroke="${lineColor}" stroke-width="${chart.lineWidth}" stroke-linejoin="round" stroke-linecap="round"/>\n`;
             if (advanced) {
                 const aSize = parseFloat(chart.arrowSize) || 12;
@@ -252,6 +264,7 @@ export function buildVectorSVG(state, opts = {}) {
                     svg += buildSvgArrowHead(first.px, first.py, Math.atan2(first.py - second.py, first.px - second.px), aSize, chart.arrowStart, lineColor);
                 }
             }
+            svg += '</g>\n';
         }
 
         if (chart.markerShape !== 'none') {

@@ -82,6 +82,10 @@ export function defaultStateBase() {
         showHorizontalGrid: true,
         showTicks: true,
         showTickLabels: true,
+        plotMarginX: 0,           // px between the frame and the data range (axis values keep their ticks)
+        plotMarginY: 0,
+        xLabelPlacement: 'below', // 'below' | 'end'
+        yLabelPlacement: 'side',  // 'side' | 'above'
 
         borderTop: true,
         borderRight: true,

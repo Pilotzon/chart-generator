@@ -52,6 +52,15 @@ tests/                      vitest suites
   sides (click the edges of a frame), legend position (four corner chips)
   and, in Advanced mode, marked points (click a dot to open its card below with a caret).
 * **Y axis title** sits right next to the Y tick numbers (the left margin is measured from them).
+* **Line margin** (Axes & Grid → X / Y axis → *Line Margin*): space between the frame and the data range, in px. The
+  axis values and ticks move inwards with the data; the frame, borders and the first / last column backgrounds do not.
+  (Use it instead of a negative axis minimum.)
+* **Data lines are cut at the axes**: the line and its arrow heads are clipped to the plot area (canvas clip / SVG `clipPath`).
+* **Axis title position**: X title *below the axis* or *at the axis end* (inside, right-aligned above the axis end);
+  Y title *beside the axis* (rotated) or *above the axis* (horizontal, centred over it). The space that is no longer
+  used is given back to the plot, and the left margin grows only as far as a wide horizontal Y title needs.
+* **Long triangle** arrow: a bit longer (1.35×) and very slightly narrower (0.42 vs 0.45 half-width) than the triangle;
+  available for axis arrows and for line starts / ends.
 * **Alignment inputs** (title alignment, column title alignment) are three icon buttons (left / center / right).
 * **Tick numbers** can be hidden in Advanced mode (*Text* tab → *Show Tick Numbers*); the space they reserved is released too.
 * **Export**: no bar background or border, just two bordered split buttons, each with a wide label zone and a small
