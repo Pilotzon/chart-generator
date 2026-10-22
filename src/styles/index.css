@@ -3,7 +3,7 @@
    ───────────────────────────────────────────── */
 @font-face {
     font-family: "Anthropic Sans";
-    src: url("AnthropicSans-Text-Light-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Text-Light-Static.otf") format("opentype");
     font-weight: 300;
     font-style: normal;
     font-display: swap;
@@ -11,7 +11,7 @@
 
 @font-face {
     font-family: "Anthropic Sans";
-    src: url("AnthropicSans-Text-Regular-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Text-Regular-Static.otf") format("opentype");
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -19,7 +19,7 @@
 
 @font-face {
     font-family: "Anthropic Sans";
-    src: url("AnthropicSans-Text-RegularItalic-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Text-RegularItalic-Static.otf") format("opentype");
     font-weight: 400;
     font-style: italic;
     font-display: swap;
@@ -27,7 +27,7 @@
 
 @font-face {
     font-family: "Anthropic Sans";
-    src: url("AnthropicSans-Text-Medium-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Text-Medium-Static.otf") format("opentype");
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -35,7 +35,7 @@
 
 @font-face {
     font-family: "Anthropic Sans";
-    src: url("AnthropicSans-Text-MediumItalic-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Text-MediumItalic-Static.otf") format("opentype");
     font-weight: 500;
     font-style: italic;
     font-display: swap;
@@ -43,7 +43,7 @@
 
 @font-face {
     font-family: "Anthropic Sans";
-    src: url("AnthropicSans-Text-Semibold-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Text-Semibold-Static.otf") format("opentype");
     font-weight: 600;
     font-style: normal;
     font-display: swap;
@@ -51,7 +51,7 @@
 
 @font-face {
     font-family: "Anthropic Sans";
-    src: url("AnthropicSans-Text-Bold-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Text-Bold-Static.otf") format("opentype");
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -59,7 +59,7 @@
 
 @font-face {
     font-family: "Anthropic Sans";
-    src: url("AnthropicSans-Text-BoldItalic-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Text-BoldItalic-Static.otf") format("opentype");
     font-weight: 700;
     font-style: italic;
     font-display: swap;
@@ -67,7 +67,7 @@
 
 @font-face {
     font-family: "Anthropic Sans";
-    src: url("AnthropicSans-Text-Extrabold-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Text-Extrabold-Static.otf") format("opentype");
     font-weight: 800;
     font-style: normal;
     font-display: swap;
@@ -75,7 +75,7 @@
 
 @font-face {
     font-family: "Anthropic Sans";
-    src: url("AnthropicSans-Text-ExtraboldItalic-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Text-ExtraboldItalic-Static.otf") format("opentype");
     font-weight: 800;
     font-style: italic;
     font-display: swap;
@@ -83,7 +83,7 @@
 
 @font-face {
     font-family: "Anthropic Sans Display";
-    src: url("AnthropicSans-Display-Regular-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Display-Regular-Static.otf") format("opentype");
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -91,7 +91,7 @@
 
 @font-face {
     font-family: "Anthropic Sans Display";
-    src: url("AnthropicSans-Display-Medium-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Display-Medium-Static.otf") format("opentype");
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -99,7 +99,7 @@
 
 @font-face {
     font-family: "Anthropic Sans Display";
-    src: url("AnthropicSans-Display-Semibold-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Display-Semibold-Static.otf") format("opentype");
     font-weight: 600;
     font-style: normal;
     font-display: swap;
@@ -107,7 +107,7 @@
 
 @font-face {
     font-family: "Anthropic Sans Display";
-    src: url("AnthropicSans-Display-Bold-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSans-Display-Bold-Static.otf") format("opentype");
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -115,7 +115,7 @@
 
 @font-face {
     font-family: "Anthropic Serif";
-    src: url("AnthropicSerif-Text-Regular-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSerif-Text-Regular-Static.otf") format("opentype");
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -123,7 +123,7 @@
 
 @font-face {
     font-family: "Anthropic Serif";
-    src: url("AnthropicSerif-Text-RegularItalic-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSerif-Text-RegularItalic-Static.otf") format("opentype");
     font-weight: 400;
     font-style: italic;
     font-display: swap;
@@ -131,7 +131,7 @@
 
 @font-face {
     font-family: "Anthropic Serif";
-    src: url("AnthropicSerif-Text-Medium-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSerif-Text-Medium-Static.otf") format("opentype");
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -139,7 +139,7 @@
 
 @font-face {
     font-family: "Anthropic Serif Display";
-    src: url("AnthropicSerif-Display-Regular-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSerif-Display-Regular-Static.otf") format("opentype");
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -147,7 +147,7 @@
 
 @font-face {
     font-family: "Anthropic Serif Display";
-    src: url("AnthropicSerif-Display-RegularItalic-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSerif-Display-RegularItalic-Static.otf") format("opentype");
     font-weight: 400;
     font-style: italic;
     font-display: swap;
@@ -155,7 +155,7 @@
 
 @font-face {
     font-family: "Anthropic Serif Display";
-    src: url("AnthropicSerif-Display-Medium-Static.otf") format("opentype");
+    src: url("../assets/fonts/AnthropicSerif-Display-Medium-Static.otf") format("opentype");
     font-weight: 500;
     font-style: normal;
     font-display: swap;
@@ -372,9 +372,6 @@ body.mode-advanced #sidebar {
     gap: 10px;
     background: var(--bg-sidebar);
     flex-shrink: 0;
-    position: sticky;
-    top: -4px;
-    z-index: 4;
 }
 
 .chart-selector-container::after {
@@ -692,30 +689,6 @@ body.mode-advanced .chart-selector-container {
 .rail-btn.active {
     background: rgba(60, 56, 46, 0.09);
     color: var(--text-primary);
-}
-
-.rail-tooltip {
-    position: absolute;
-    left: calc(100% + 10px);
-    top: 50%;
-    transform: translateY(-50%) translateX(-4px);
-    background: var(--text-primary);
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: var(--radius-xs);
-    font-size: 12px;
-    font-weight: 500;
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.15s var(--ease-smooth), transform 0.18s var(--ease-out);
-    z-index: 100;
-    box-shadow: var(--shadow-md);
-}
-
-.rail-btn:hover .rail-tooltip {
-    opacity: 1;
-    transform: translateY(-50%) translateX(0);
 }
 
 /* ── Sidebar content scroll area ── */
@@ -1324,18 +1297,6 @@ textarea:focus {
     display: none !important;
 }
 
-/* ── Portal dropdown ── */
-#dropdownPortal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 999999;
-    pointer-events: none;
-    overflow: visible;
-}
-
 .portal-dropdown-menu {
     position: fixed;
     background: var(--bg-elevated);
@@ -1514,37 +1475,6 @@ textarea:focus {
     background: #000;
 }
 
-/* ── Shadow subgroup collapse ── */
-.shadow-subgroup {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow: hidden;
-    max-height: 0;
-    opacity: 0;
-    margin-top: -10px;
-    pointer-events: none;
-    transition: max-height 0.35s var(--ease-out),
-        opacity 0.25s var(--ease-smooth),
-        margin-top 0.3s var(--ease-smooth);
-}
-
-.shadow-subgroup.visible {
-    max-height: 600px;
-    opacity: 1;
-    margin-top: 0;
-    pointer-events: auto;
-}
-
-#chartLabelOptions,
-#legendOptions {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow: hidden;
-    animation: subIn 0.28s var(--ease-out);
-}
-
 @keyframes subIn {
     from {
         opacity: 0;
@@ -1669,49 +1599,6 @@ textarea:focus {
 
 .border-toggle:active .border-toggle-face {
     transform: scale(0.97);
-}
-
-/* Tick show/hide rows */
-#tickColorRow,
-#tickLengthRow {
-    overflow: hidden;
-    transition: max-height 0.3s var(--ease-out),
-        opacity 0.2s var(--ease-smooth),
-        margin-top 0.25s var(--ease-smooth),
-        margin-bottom 0.25s var(--ease-smooth);
-    max-height: 50px;
-    opacity: 1;
-}
-
-#tickColorRow.hidden-row,
-#tickLengthRow.hidden-row {
-    max-height: 0;
-    opacity: 0;
-    margin-top: -7px;
-    margin-bottom: -7px;
-    min-height: 0;
-    pointer-events: none;
-}
-
-#canvasSizeRows,
-#squareSizeRow {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow: hidden;
-    transition: max-height 0.3s var(--ease-out),
-        opacity 0.2s var(--ease-smooth),
-        margin-top 0.25s var(--ease-smooth);
-    max-height: 200px;
-    opacity: 1;
-}
-
-#canvasSizeRows.canvas-size-hidden,
-#squareSizeRow.square-size-hidden {
-    max-height: 0;
-    opacity: 0;
-    margin-top: -7px;
-    pointer-events: none;
 }
 
 /* ── Color input (round swatch) ── */
@@ -1962,12 +1849,6 @@ body.mode-advanced .points-table td.td-mark {
     accent-color: var(--text-primary);
     width: 16px;
     height: 16px;
-}
-
-#markedPointsSharedOptions[style*="display: block"] {
-    display: flex !important;
-    flex-direction: column;
-    gap: 12px;
 }
 
 /* ── Marked point cards ── */
