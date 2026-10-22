@@ -2,6 +2,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../src/App.jsx';
+import { computeLayout } from '../src/lib/layout.js';
 
 let root, host, downloads, blobs;
 
@@ -465,5 +466,102 @@ describe('selection toolbar and quick edit', () => {
         await click(byText('#quickEditBox .btn', 'Save changes'));
         expect(q('#quickEditBox')).toBeNull();
         expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').titleRuns[0].text).toBe('New title');
+    });
+});
+
+describe('empty text locks its options; placeholders; checkboxes; point highlight', () => {
+    const rowOf = (label) => qa('.control-row').find(r => r.querySelector('label')?.textContent.trim() === label);
+
+    it('every text box has a placeholder, and none is empty text', async () => {
+        await render();
+        const editors = qa('.rich-text-editor');
+        expect(editors.length).toBeGreaterThanOrEqual(3);
+        editors.forEach(ed => expect(ed.dataset.placeholder.length).toBeGreaterThan(8));
+        await click(byText('.group-title-text', 'Column Titles'));
+        await click(q('.col-sketch-col'));
+        const colEditor = q('.col-editor .rich-text-editor');
+        expect(colEditor.dataset.placeholder.length).toBeGreaterThan(8);
+        // an empty column title locks its alignment and placement
+        const colRow = (l) => qa('.col-editor .control-row').find(r => r.querySelector('label')?.textContent === l);
+        expect(colRow('Alignment').dataset.disabled).toBe('true');
+        expect(colRow('Placement').dataset.disabled).toBe('true');
+        await typeInto(colEditor, 'First');
+        expect(colRow('Alignment').dataset.disabled).toBeUndefined();
+    });
+
+    it('options of the title are locked while it is empty, and so is the Add Subtitle button', async () => {
+        await render();
+        expect(q('.btn-add-subtitle').disabled).toBe(false);
+        expect(rowOf('Alignment').dataset.disabled).toBeUndefined();
+        await typeInto(q('#titleText'), '');
+        expect(rowOf('Alignment').dataset.disabled).toBe('true');
+        expect(rowOf('Alignment').hasAttribute('inert')).toBe(true);
+        expect(rowOf('Size').dataset.disabled).toBe('true');
+        expect(q('.btn-add-subtitle').disabled).toBe(true);
+        await typeInto(q('#titleText'), 'Hello');
+        expect(rowOf('Alignment').dataset.disabled).toBeUndefined();
+        expect(q('.btn-add-subtitle').disabled).toBe(false);
+    });
+
+    it('axis label placements and fonts follow their text; no divider above the subtitle button', async () => {
+        await render();
+        await typeInto(q('#xLabel'), '');
+        expect(rowOf('X Label Position').dataset.disabled).toBe('true');
+        expect(rowOf('Y Label Position').dataset.disabled).toBeUndefined();
+        expect(rowOf('Label Size').dataset.disabled).toBeUndefined();
+        await typeInto(q('#yLabel'), '');
+        expect(rowOf('Y Label Position').dataset.disabled).toBe('true');
+        expect(rowOf('Label Size').dataset.disabled).toBe('true');
+        expect(q('.btn-add-subtitle').previousElementSibling?.classList.contains('subgroup-divider')).toBeFalsy();
+    });
+
+    it('advanced: no divider between title and the subtitle button', async () => {
+        await render();
+        await goAdvanced();
+        await click(q('.rail-btn[data-panel="text"]'));
+        const btn = q('.btn-add-subtitle');
+        expect(btn.previousElementSibling?.classList.contains('subgroup-divider')).toBeFalsy();
+    });
+
+    it('a point picked on the graph is highlighted in the points editor (and the Chart tab opens)', async () => {
+        await render();
+        await goAdvanced();
+        await click(q('.rail-btn[data-panel="text"]'));
+        const canvas = q('#graphCanvas');
+        canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 850, height: 680, right: 850, bottom: 680 });
+        const st = stored('GRAPH_STUDIO_PRO_V13_ADVANCED');
+        const lay = computeLayout(st, canvas.width, canvas.height, { advanced: true });
+        const pt = st.charts[0].points[1];
+        expect(qa('.points-table tr.is-selected').length).toBe(0);
+        await mouse(canvas, 'mousedown', { clientX: lay.mapX(pt.x), clientY: lay.mapY(pt.y) });
+        await mouse(window, 'mouseup');
+        const rows = qa('.points-table tbody tr');
+        expect(rows[1].classList.contains('is-selected')).toBe(true);
+        expect(qa('.points-table tr.is-selected').length).toBe(1);
+        expect(q('.rail-btn.active').dataset.panel).toBe('chart');
+    });
+
+    it('checkboxes are rounder with their own border colour; the Mark box sits lower', async () => {
+        const fs = await import('node:fs');
+        const css = fs.readFileSync('src/styles/additions.css', 'utf8');
+        expect(css).toMatch(/input\[type="checkbox"\]:not\(\.toggle-switch input\) \{[^}]*border: 1\.5px solid #8497B3;[^}]*border-radius: 6px/);
+        expect(css).toMatch(/td-mark \.mark-checkbox \{ position: relative; top: 4px/);
+        expect(css).toMatch(/\.points-table tr\.is-selected td/);
+    });
+
+    it('the marked-point label position is locked until the label has text', async () => {
+        await render();
+        await goAdvanced();
+        const box = qa('.mark-checkbox')[1];
+        await click(box);
+        expect(rowOf('Label position').dataset.disabled).toBe('true');
+        const input = q('.marked-input');
+        expect(input.placeholder.length).toBeGreaterThan(8);
+        await act(async () => {
+            const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+            set.call(input, 'Peak');
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        expect(rowOf('Label position').dataset.disabled).toBeUndefined();
     });
 });

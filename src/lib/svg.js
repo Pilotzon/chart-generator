@@ -1,5 +1,5 @@
 import { hasText, hasHebrewInRuns, flipRunsForWord, splitRunsIntoLines } from './richText.js';
-import { computeLayout, getColumns, getColumnConfig, getCanvasSize, getMeasureCtx } from './layout.js';
+import { borderSegments, computeLayout, getColumns, getColumnConfig, getCanvasSize, getMeasureCtx } from './layout.js';
 import { measureRunWidth, measureLineWidth, runFont } from './canvasText.js';
 import { getSmoothControlPoints, LONG_TRIANGLE } from './canvasShapes.js';
 import { anchorToPointIndex, markKeyFor, sortedPoints, getLegendCharts } from './points.js';
@@ -154,11 +154,8 @@ export function buildVectorSVG(state, opts = {}) {
 
     const bColor = state.borderColor || '#000000';
     const bWidth = parseFloat(state.borderWidth) || 1.5;
-    const border = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${bColor}" stroke-width="${bWidth}"/>\n`;
-    if (state.borderTop) svg += border(pad.left, pad.top, pad.left + pw, pad.top);
-    if (state.borderRight) svg += border(pad.left + pw, pad.top, pad.left + pw, pad.top + ph);
-    if (state.borderBottom) svg += border(pad.left, pad.top + ph, pad.left + pw, pad.top + ph);
-    if (state.borderLeft) svg += border(pad.left, pad.top, pad.left, pad.top + ph);
+    const border = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${bColor}" stroke-width="${bWidth}" stroke-linecap="butt"/>\n`;
+    borderSegments(state, pad, pw, ph).forEach(sg => { svg += border(sg.x1, sg.y1, sg.x2, sg.y2); });
 
     if (advanced && state.showAxisArrows) {
         const aSize = parseFloat(state.axisArrowSize) || 14;

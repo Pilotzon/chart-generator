@@ -10,7 +10,7 @@ import { QuickEdit } from './QuickEdit.jsx';
 const dist = (x1, y1, x2, y2) => Math.hypot(x1 - x2, y1 - y2);
 
 export function Preview() {
-    const { state, mode, interaction, setInteraction, actions, fontTick, resetCount } = useApp();
+    const { state, mode, interaction, setInteraction, setPanel, actions, fontTick, resetCount } = useApp();
     const { invertText } = useEffectiveExport();
     const canvasRef = useRef(null);
     const cardRef = useRef(null);
@@ -124,6 +124,7 @@ export function Preview() {
                 selectedIdx: hit.idx, selectedChartId: hit.chart.id
             });
             if (hit.chart.id !== state.activeChartId) actions.setActiveChart(hit.chart.id);
+            if (mode === 'advanced') setPanel('chart'); // the points editor lives in the Chart tab
             setQuick(null);
             return;
         }

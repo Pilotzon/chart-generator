@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
 import { RichTextEditor } from '../richtext/RichTextEditor.jsx';
+import { usePlaceholder, placeholderKind } from '../../lib/placeholders.js';
 import { IconPencil } from '../controls/Icons.jsx';
 
 const TITLES = {
@@ -23,6 +24,7 @@ export function QuickEdit({ target, cardRef, onClose }) {
     const boxRef = useRef(null);
     const [runs, setRuns] = useState(() => currentRuns(state, target.key));
     const [pos, setPos] = useState(null);
+    const placeholder = usePlaceholder(placeholderKind(target.key));
 
     useLayoutEffect(() => {
         const card = cardRef.current, box = boxRef.current;
@@ -67,7 +69,7 @@ export function QuickEdit({ target, cardRef, onClose }) {
                 </button>
             </div>
             <div className="rich-text-wrapper">
-                <RichTextEditor id="quickInput" runs={runs} onChange={setRuns} autoFocus />
+                <RichTextEditor id="quickInput" runs={runs} onChange={setRuns} placeholder={placeholder} autoFocus />
             </div>
             <button type="button" className="btn btn-primary btn-quick-save" onClick={save}>Save changes</button>
         </div>

@@ -171,10 +171,11 @@ export function computeLayout(state, W, H, opts = {}) {
     const belowBlock = belowH > 0 ? belowH + 8 : 0;
 
     // Y title above the axis: sits over the column titles (and over the axis arrow, if any)
-    const arrowOn = !!(opts.advanced && state.showAxisArrows && state.arrowLeft && state.borderLeft);
-    const arrowReach = arrowOn ? arrowReachOf(state.axisArrowStyle || 'triangle', parseFloat(state.axisArrowSize) || 14) + 2 : 0;
+    // (the arrow head of the Y axis lies inside the plot, its tip is at the axis top, so it needs no room here)
+    const Y_ABOVE_GAP = 10;                                  // visual gap between the title text and the top of the axis
+    const lineSlack = axisFontPx * 0.35;                     // empty part of a text line below the glyphs (line height 1.35)
     const yAboveH = yAbove ? yLines * (axisFontPx * 1.35) : 0;
-    const yAboveBlock = yAbove ? yAboveH + 4 + Math.max(0, arrowReach - aboveBlock) : 0;
+    const yAboveBlock = yAbove ? yAboveH - lineSlack + Y_ABOVE_GAP + 3 : 0;
 
     const pad = {
         top: top + aboveBlock + yAboveBlock,
@@ -194,11 +195,13 @@ export function computeLayout(state, W, H, opts = {}) {
 
     // Where the axis titles go (top-left corner of the text block; `anchor` is the text alignment)
     const xBlockH = (xEnd ? xEndLines.length : xLines) * (axisFontPx * 1.35);
+    // the LAST row is centred on the axis line (where the arrow is, or would be); earlier rows stack above it
+    const xEndTop = pad.top + ph - axisFontPx * 0.5 - Math.max(0, xEndLines.length - 1) * (axisFontPx * 1.35);
     const xLabel = xEnd
-        ? { placement: 'end', anchor: 'left', x: pad.left + pw + xEndGap, y: pad.top + ph - xBlockH / 2, lines: xEndLines, width: xEndW, height: xBlockH }
+        ? { placement: 'end', anchor: 'left', x: pad.left + pw + xEndGap, y: xEndTop, lines: xEndLines, width: xEndW, height: xBlockH }
         : { placement: 'below', anchor: 'center', x: pad.left + pw / 2, y: pad.top + ph + tLen + tickBlockH + 14 + belowBlock };
     const yLabel = yPlacement === 'above'
-        ? { placement: 'above', anchor: 'center', x: pad.left, y: pad.top - Math.max(aboveBlock, arrowReach) - 1 - yAboveH }
+        ? { placement: 'above', anchor: 'center', x: pad.left, y: pad.top - aboveBlock - Y_ABOVE_GAP - yAboveH + lineSlack }
         : { placement: 'side', x: yLabelX, y: pad.top + ph / 2 };
 
     return {
@@ -218,4 +221,20 @@ export function computeLayout(state, W, H, opts = {}) {
         unmapX: px => state.xMin + ((px - pad.left - mXc) / innerW) * xRange,
         unmapY: py => state.yMin + ((pad.top + ph - mYc - py) / innerH) * yRange
     };
+}
+
+
+/**
+ * The four frame lines as segments. Where two visible sides meet, each one is extended by half the line width
+ * so the corner is a sharp square (no notch, no rounding).
+ */
+export function borderSegments(state, pad, pw, ph) {
+    const h = (parseFloat(state.borderWidth) || 1.5) / 2;
+    const l = pad.left, t = pad.top, r = pad.left + pw, b = pad.top + ph;
+    const segs = [];
+    if (state.borderTop) segs.push({ side: 'top', x1: l - (state.borderLeft ? h : 0), y1: t, x2: r + (state.borderRight ? h : 0), y2: t });
+    if (state.borderRight) segs.push({ side: 'right', x1: r, y1: t - (state.borderTop ? h : 0), x2: r, y2: b + (state.borderBottom ? h : 0) });
+    if (state.borderBottom) segs.push({ side: 'bottom', x1: l - (state.borderLeft ? h : 0), y1: b, x2: r + (state.borderRight ? h : 0), y2: b });
+    if (state.borderLeft) segs.push({ side: 'left', x1: l, y1: t - (state.borderTop ? h : 0), x2: l, y2: b + (state.borderBottom ? h : 0) });
+    return segs;
 }

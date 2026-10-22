@@ -1,3 +1,5 @@
+import { useApp } from '../../context/AppContext.jsx';
+import { selectedPointKey } from '../../lib/points.js';
 import { Group } from '../controls/Group.jsx';
 import { Divider, SectionLabel } from '../controls/Inputs.jsx';
 import { AdvancedLineGroupBody } from '../blocks/LineBlocks.jsx';
@@ -18,9 +20,10 @@ import { ColumnDefaultsBlock, ColumnSketchBlock } from '../blocks/ColumnsBlocks.
  *   Columns – shared title font + a clickable column sketch
  */
 export function ChartPanel() {
+    const { interaction } = useApp();
     return (
         <>
-            <Group title="Data">
+            <Group title="Data" openOn={selectedPointKey(interaction)}>
                 <PointsTable showMark />
                 <Divider />
                 <SectionLabel>Marked points</SectionLabel>
@@ -43,7 +46,6 @@ export function TextPanel() {
         <>
             <Group title="Titles">
                 <TitleBlock />
-                <Divider />
                 <SubtitleBlock />
             </Group>
             <Group title="Axis text">

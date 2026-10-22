@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSettings } from '../../hooks/useSettings.js';
 import { getColumnConfig, getColumns } from '../../lib/layout.js';
 import { COLUMN_ALIGN_OPTIONS, COLUMN_PLACEMENT_OPTIONS } from '../../lib/options.js';
+import { usePlaceholder } from '../../lib/placeholders.js';
 import { runsToPlainText } from '../../lib/richText.js';
 import { ChartLines, clamp01 } from '../controls/Sketches.jsx';
 import { RichTextEditor } from '../richtext/RichTextEditor.jsx';
@@ -31,6 +32,8 @@ function ColumnEditor({ column, caret, onClose }) {
     const raw = (state.columns || {})[column.index] || {};
     const cfg = getColumnConfig(state, column.index);
     const patch = (partial) => actions.patchColumn(column.index, partial);
+    const placeholder = usePlaceholder('column');
+    const empty = runsToPlainText(raw.runs || []).trim() === '';
     return (
         <div className="col-editor" style={{ '--caret-x': `${caret}%` }}>
             <div className="col-editor-header">
@@ -45,12 +48,12 @@ function ColumnEditor({ column, caret, onClose }) {
             <div className="rich-text-wrapper">
                 <RichTextEditor
                     runs={raw.runs || []}
-                    placeholder="Column title…"
+                    placeholder={placeholder}
                     onChange={runs => patch({ runs })}
                 />
             </div>
-            <AlignRow label="Alignment" value={cfg.align} options={COLUMN_ALIGN_OPTIONS} onChange={v => patch({ align: v })} />
-            <DropdownRow label="Placement" value={cfg.placement} options={COLUMN_PLACEMENT_OPTIONS} onChange={v => patch({ placement: v })} />
+            <AlignRow label="Alignment" disabled={empty} value={cfg.align} options={COLUMN_ALIGN_OPTIONS} onChange={v => patch({ align: v })} />
+            <DropdownRow label="Placement" disabled={empty} value={cfg.placement} options={COLUMN_PLACEMENT_OPTIONS} onChange={v => patch({ placement: v })} />
             <ToggleRow label="Background" checked={cfg.bgEnabled} onChange={v => patch({ bgEnabled: v })} />
             <Reveal show={cfg.bgEnabled}>
                 <ColorRow label="Color" value={cfg.bgColor} onChange={v => patch({ bgColor: v })} />

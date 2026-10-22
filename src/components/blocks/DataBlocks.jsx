@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
 import { useSettings } from '../../hooks/useSettings.js';
 import { detectDirection } from '../../lib/richText.js';
+import { usePlaceholder } from '../../lib/placeholders.js';
 import { LABEL_POSITION_OPTIONS, CHART_LABEL_POSITION_OPTIONS } from '../../lib/options.js';
 import { defaultMarkMeta, detectLabelOverlap, formatDec, markKeyFor } from '../../lib/points.js';
 import {
@@ -13,7 +14,18 @@ import { SvgIcon } from '../controls/SvgIcon.jsx';
 
 export function PointsTable({ showMark }) {
     const { chart, actions } = useSettings();
-    const { setInteraction } = useApp();
+    const { interaction, setInteraction } = useApp();
+    const bodyRef = useRef(null);
+    const selectedIdx = interaction.selectedChartId === chart.id ? interaction.selectedIdx : null;
+    const hoverIdx = interaction.hoverChartId === chart.id ? interaction.hoverIdx : null;
+
+    // a point picked on the graph: bring its row into view
+    useEffect(() => {
+        if (selectedIdx == null) return;
+        const row = bodyRef.current?.querySelector(`tr[data-index="${selectedIdx}"]`);
+        row?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    }, [selectedIdx, chart.id]);
+
     return (
         <>
             <table className="points-table">
@@ -25,7 +37,7 @@ export function PointsTable({ showMark }) {
                         <th></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody ref={bodyRef}>
                     {chart.points.map((pt, i) => {
                         const commit = (field) => (n) => {
                             const v = formatDec(n);
@@ -39,7 +51,12 @@ export function PointsTable({ showMark }) {
                             }
                         };
                         return (
-                            <tr key={i}>
+                            <tr
+                                key={i}
+                                data-index={i}
+                                className={`${selectedIdx === i ? 'is-selected' : ''} ${hoverIdx === i && selectedIdx !== i ? 'is-hovered' : ''}`}
+                                aria-selected={selectedIdx === i}
+                            >
                                 <td><NumberInput step={0.1} commitOn="blur" clampOnBlur={false} value={pt.x.toFixed(1)} onCommit={commit('x')} {...highlight} /></td>
                                 <td><NumberInput step={0.1} commitOn="blur" clampOnBlur={false} value={pt.y.toFixed(1)} onCommit={commit('y')} {...highlight} /></td>
                                 {showMark && (
@@ -76,6 +93,8 @@ function MarkedPointCard({ chart, index, caret }) {
     const meta = { ...defaultMarkMeta(chart), ...((chart.markedPointsMeta || {})[key] || {}) };
     const patch = (partial) => actions.patchMarkMeta(chart.id, key, partial);
     const overlap = detectLabelOverlap(chart, index);
+    const placeholder = usePlaceholder('mark');
+    const noLabel = String(meta.label || '').trim() === '';
     return (
         <div className="marked-point-card" style={caret == null ? undefined : { '--caret-x': `${caret}%` }}>
             <div className="marked-point-header">
@@ -92,7 +111,7 @@ function MarkedPointCard({ chart, index, caret }) {
             <input
                 type="text"
                 className="marked-input"
-                placeholder="Label text"
+                placeholder={placeholder}
                 dir={detectDirection(meta.label || '')}
                 value={meta.label || ''}
                 onChange={e => patch({ label: e.target.value })}
@@ -102,6 +121,8 @@ function MarkedPointCard({ chart, index, caret }) {
             <RangeRow label="Outline width" min={0} max={6} step={0.5} value={meta.outlineWidth} onChange={v => patch({ outlineWidth: v })} />
             <DropdownRow
                 label="Label position"
+                disabled={noLabel}
+                hint="Write a label first to choose where it goes"
                 value={meta.labelPosition}
                 options={LABEL_POSITION_OPTIONS.map(o => ({ ...o, icon: o.value }))}
                 onChange={v => patch({ labelPosition: v })}
@@ -121,6 +142,7 @@ export function MarkedPointsBlock() {
         });
     });
     const active = marks.find(m => m.id === selected) || marks[0] || null;
+    const noLabels = marks.every(m => String(((m.chart.markedPointsMeta || {})[markKeyFor(m.chart, m.index)] || {}).label || '').trim() === '');
     const span = state.xMax - state.xMin || 1;
     const ySpan = state.yMax - state.yMin || 1;
     const posOf = (pt) => ({
@@ -133,8 +155,8 @@ export function MarkedPointsBlock() {
             <p className="hint-text">Mark a point using the checkbox in the data table, then click its dot below to customize it.</p>
             {marks.length > 0 && (
                 <div className="marked-shared-options">
-                    <FontRow label="Label Font" value={state.markedFont} onChange={v => set('markedFont', v)} />
-                    <StepperRow label="Label Size" min={8} max={30} value={state.markedFontSize} onChange={v => set('markedFontSize', v)} />
+                    <FontRow label="Label Font" disabled={noLabels} value={state.markedFont} onChange={v => set('markedFont', v)} />
+                    <StepperRow label="Label Size" disabled={noLabels} min={8} max={30} value={state.markedFontSize} onChange={v => set('markedFontSize', v)} />
                     <Divider />
                 </div>
             )}

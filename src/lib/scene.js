@@ -1,5 +1,5 @@
 import { detectDirection, hasText, hasHebrewInRuns, flipRunsForWord, hexToRgb } from './richText.js';
-import { computeLayout, getColumns, getColumnConfig } from './layout.js';
+import { borderSegments, computeLayout, getColumns, getColumnConfig } from './layout.js';
 import { drawRichLine, drawRichLines, drawRichText } from './canvasText.js';
 import { splitRunsIntoLines } from './richText.js';
 import {
@@ -28,6 +28,10 @@ export function drawScene(ctx, state, opts) {
     const registerHitbox = (key, x, y, w, h) => clickTargets.push({ key, x, y, w, h });
 
     ctx.clearRect(0, 0, W, H);
+    // the 2D context is reused between frames: start from square, non-dashed lines every time
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'miter';
+    ctx.setLineDash([]);
     if (background) {
         ctx.fillStyle = background;
         ctx.fillRect(0, 0, W, H);
@@ -115,10 +119,9 @@ export function drawScene(ctx, state, opts) {
     ctx.strokeStyle = bColor;
     ctx.lineWidth = bWidth;
     const line = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
-    if (state.borderTop) line(pad.left, pad.top, pad.left + pw, pad.top);
-    if (state.borderRight) line(pad.left + pw, pad.top, pad.left + pw, pad.top + ph);
-    if (state.borderBottom) line(pad.left, pad.top + ph, pad.left + pw, pad.top + ph);
-    if (state.borderLeft) line(pad.left, pad.top, pad.left, pad.top + ph);
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'miter';
+    borderSegments(state, pad, pw, ph).forEach(sg => line(sg.x1, sg.y1, sg.x2, sg.y2));
 
     // ── Axis arrows (advanced)
     if (advanced && state.showAxisArrows) {

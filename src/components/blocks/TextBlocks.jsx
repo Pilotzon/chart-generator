@@ -1,5 +1,6 @@
 import { useApp } from '../../context/AppContext.jsx';
 import { useSettings } from '../../hooks/useSettings.js';
+import { usePlaceholder, placeholderKind } from '../../lib/placeholders.js';
 import { TITLE_POSITION_OPTIONS, LEGEND_POSITION_OPTIONS, X_LABEL_PLACEMENT_OPTIONS, Y_LABEL_PLACEMENT_OPTIONS } from '../../lib/options.js';
 import { runsToPlainText, textToRuns } from '../../lib/richText.js';
 import { RichTextEditor } from '../richtext/RichTextEditor.jsx';
@@ -12,6 +13,7 @@ import { IconPlus } from '../controls/Icons.jsx';
 /** Label + rich-text box bound to a text key (titleText, xLabel, …). */
 export function RichField({ label, editorKey, runs, minHeight }) {
     const { actions } = useApp();
+    const placeholder = usePlaceholder(placeholderKind(editorKey));
     return (
         <>
             {label && <span className="field-label">{label}</span>}
@@ -21,6 +23,7 @@ export function RichField({ label, editorKey, runs, minHeight }) {
                     data-key={editorKey}
                     runs={runs}
                     minHeight={minHeight}
+                    placeholder={placeholder}
                     onChange={next => actions.setRuns(editorKey, next)}
                 />
             </div>
@@ -28,25 +31,32 @@ export function RichField({ label, editorKey, runs, minHeight }) {
     );
 }
 
+/** True when the rich-text runs contain no visible text. */
+export const isEmptyRuns = (runs) => runsToPlainText(runs || []).trim() === '';
+
 export function TitleBlock() {
     const { state, set } = useSettings();
+    const empty = isEmptyRuns(state.titleRuns);
     return (
         <>
             <RichField label="Main Title" editorKey="titleText" runs={state.titleRuns} />
-            <AlignRow label="Alignment" value={state.titlePosition} options={TITLE_POSITION_OPTIONS} onChange={v => set('titlePosition', v)} />
-            <FontRow value={state.titleFont} onChange={v => set('titleFont', v)} />
-            <StepperRow label="Size" min={10} max={40} value={state.titleFontSize} onChange={v => set('titleFontSize', v)} />
+            <AlignRow label="Alignment" disabled={empty} value={state.titlePosition} options={TITLE_POSITION_OPTIONS} onChange={v => set('titlePosition', v)} />
+            <FontRow disabled={empty} value={state.titleFont} onChange={v => set('titleFont', v)} />
+            <StepperRow label="Size" disabled={empty} min={10} max={40} value={state.titleFontSize} onChange={v => set('titleFontSize', v)} />
         </>
     );
 }
 
 export function SubtitleBlock() {
     const { state, set } = useSettings();
+    const titleEmpty = isEmptyRuns(state.titleRuns);
     if (!state.hasSubtitle) {
         return (
             <button
                 type="button"
                 className="btn btn-secondary btn-add-subtitle"
+                disabled={titleEmpty}
+                title={titleEmpty ? 'Write a title first, the subtitle lives under it' : undefined}
                 onClick={() => {
                     set('hasSubtitle', true);
                     if (runsToPlainText(state.subtitleRuns || []) === '') {
@@ -59,11 +69,13 @@ export function SubtitleBlock() {
             </button>
         );
     }
+    const subEmpty = isEmptyRuns(state.subtitleRuns);
     return (
         <div className="subtitle-inline-inner">
+            <Divider />
             <RichField label="Subtitle" editorKey="subtitleText" runs={state.subtitleRuns} />
-            <FontRow value={state.subtitleFont} onChange={v => set('subtitleFont', v)} />
-            <StepperRow label="Size" min={10} max={30} value={state.subtitleFontSize} onChange={v => set('subtitleFontSize', v)} />
+            <FontRow disabled={subEmpty} value={state.subtitleFont} onChange={v => set('subtitleFont', v)} />
+            <StepperRow label="Size" disabled={subEmpty} min={10} max={30} value={state.subtitleFontSize} onChange={v => set('subtitleFontSize', v)} />
             <button type="button" className="btn btn-danger-soft btn-remove-subtitle" onClick={() => set('hasSubtitle', false)}>
                 Remove Subtitle
             </button>
@@ -73,14 +85,16 @@ export function SubtitleBlock() {
 
 export function AxisLabelsBlock() {
     const { state, set } = useSettings();
+    const xEmpty = isEmptyRuns(state.xLabelRuns);
+    const yEmpty = isEmptyRuns(state.yLabelRuns);
     return (
         <>
             <RichField label="X-Axis Label" editorKey="xLabel" runs={state.xLabelRuns} />
-            <DropdownRow label="X Label Position" value={state.xLabelPlacement || 'below'} options={X_LABEL_PLACEMENT_OPTIONS} onChange={v => set('xLabelPlacement', v)} />
+            <DropdownRow label="X Label Position" disabled={xEmpty} value={state.xLabelPlacement || 'below'} options={X_LABEL_PLACEMENT_OPTIONS} onChange={v => set('xLabelPlacement', v)} />
             <RichField label="Y-Axis Label" editorKey="yLabel" runs={state.yLabelRuns} />
-            <DropdownRow label="Y Label Position" value={state.yLabelPlacement || 'side'} options={Y_LABEL_PLACEMENT_OPTIONS} onChange={v => set('yLabelPlacement', v)} />
-            <FontRow label="Label Font" value={state.axisFont} onChange={v => set('axisFont', v)} />
-            <StepperRow label="Label Size" min={8} max={36} value={state.axisFontSize} onChange={v => set('axisFontSize', v)} />
+            <DropdownRow label="Y Label Position" disabled={yEmpty} value={state.yLabelPlacement || 'side'} options={Y_LABEL_PLACEMENT_OPTIONS} onChange={v => set('yLabelPlacement', v)} />
+            <FontRow label="Label Font" disabled={xEmpty && yEmpty} value={state.axisFont} onChange={v => set('axisFont', v)} />
+            <StepperRow label="Label Size" disabled={xEmpty && yEmpty} min={8} max={36} value={state.axisFontSize} onChange={v => set('axisFontSize', v)} />
         </>
     );
 }

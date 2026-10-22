@@ -77,4 +77,15 @@ tests/                      vitest suites
   the Hebrew / Arabic stretches are reversed (brackets mirrored, niqqud / harakat kept on their letter) while Latin
   words and numbers stay intact and only change position, e.g. `שלום big light` → `big light םולש`. Lines without
   Hebrew / Arabic are untouched, the conversion is its own inverse, and PNG is never flipped.
+* **Frame**: the four border lines are square (butt caps, corners filled by extending the sides by half the line width).
+* **Axis title placement**: *above the axis* (Y) leaves a 10px gap to the axis top; *at the axis end* (X) puts the last
+  text row exactly on the axis line (the arrow's height, real or imaginary).
+* **Placeholders**: every text box (title, subtitle, axis labels, column titles, marked-point labels, chart names, quick
+  edit) shows a funny grey placeholder (`src/lib/placeholders.js`).
+* **Empty text locks its options**: with no title, its alignment / font / size and the *Add Subtitle* button are disabled;
+  likewise subtitle font/size, axis-label placements and fonts, column alignment / placement and a marked point's label
+  position (disabled rows are `inert`, dimmed and explain themselves in a tooltip).
+* **Pick a point on the graph** and its row is highlighted (and scrolled into view) in the points editor; the Data group
+  expands and, in Advanced mode, the Chart tab opens.
+* **Checkboxes** share one style: 6px corners, slate-blue border, blue when checked.
 * Classic and Advanced workspaces are stored separately in `localStorage`.

@@ -100,9 +100,17 @@ export function RangeInput({ value, onChange, min = 0, max = 1, step = 0.05 }) {
 }
 
 /** `<label> … control` row. */
-export function Row({ label, children, className = '', disabled = false }) {
+export const EMPTY_HINT = 'Write some text first to unlock this option';
+
+export function Row({ label, children, className = '', disabled = false, hint }) {
     return (
-        <div className={`control-row ${className}`} data-disabled={disabled ? 'true' : undefined}>
+        <div
+            className={`control-row ${className}`}
+            data-disabled={disabled ? 'true' : undefined}
+            aria-disabled={disabled ? 'true' : undefined}
+            inert={disabled ? true : undefined}
+            title={disabled ? (hint || EMPTY_HINT) : undefined}
+        >
             {label !== undefined && <label>{label}</label>}
             {children}
         </div>
@@ -117,8 +125,8 @@ export function ToggleRow({ label, checked, onChange, className }) {
     );
 }
 
-export function StepperRow({ label, className, ...stepper }) {
-    return <Row label={label} className={className}><NumberStepper {...stepper} /></Row>;
+export function StepperRow({ label, className, disabled, ...stepper }) {
+    return <Row label={label} className={className} disabled={disabled}><NumberStepper {...stepper} /></Row>;
 }
 
 export function ColorRow({ label, value, onChange, className }) {
@@ -129,8 +137,8 @@ export function RangeRow({ label, className, ...range }) {
     return <Row label={label} className={className}><RangeInput {...range} /></Row>;
 }
 
-export function DropdownRow({ label, className, ...dd }) {
-    return <Row label={label} className={className}><Dropdown {...dd} /></Row>;
+export function DropdownRow({ label, className, disabled, hint, ...dd }) {
+    return <Row label={label} className={className} disabled={disabled} hint={hint}><Dropdown {...dd} /></Row>;
 }
 
 /** Segmented 3-button picker (left / center / right) drawn with the text-align glyphs. */
@@ -155,12 +163,12 @@ export function AlignButtons({ value, options, onChange }) {
     );
 }
 
-export function AlignRow({ label, className, ...props }) {
-    return <Row label={label} className={className}><AlignButtons {...props} /></Row>;
+export function AlignRow({ label, className, disabled, ...props }) {
+    return <Row label={label} className={className} disabled={disabled}><AlignButtons {...props} /></Row>;
 }
 
-export function FontRow({ label = 'Font', value, onChange }) {
-    return <Row label={label}><FontDropdown value={value} onChange={onChange} /></Row>;
+export function FontRow({ label = 'Font', value, onChange, disabled }) {
+    return <Row label={label} disabled={disabled}><FontDropdown value={value} onChange={onChange} /></Row>;
 }
 
 /** Animated container for settings that only apply when a switch is on. */

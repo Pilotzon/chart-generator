@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultColumn, makeDefaultState } from '../src/lib/defaults.js';
-import { getColumns, getColumnConfig, computeLayout } from '../src/lib/layout.js';
+import { getColumns, getColumnConfig, computeLayout, borderSegments } from '../src/lib/layout.js';
 import { flipRunsForWord, textToRuns } from '../src/lib/richText.js';
 import { buildVectorSVG } from '../src/lib/svg.js';
 
@@ -173,8 +173,10 @@ describe('axis title placement', () => {
         expect(end.xLabel.anchor).toBe('left');
         expect(end.xLabel.x).toBeGreaterThan(end.pad.left + end.pw);       // right of the axis end (and its arrow)
         expect(end.xLabel.x + end.xLabel.width).toBeLessThanOrEqual(850);  // fits in the canvas
-        // vertically centred on the axis line
-        expect(end.xLabel.y + end.xLabel.height / 2).toBeCloseTo(end.pad.top + end.ph, 5);
+        // the LAST row is centred on the axis line (the height of the arrow, real or imaginary)
+        const fontPx = parseInt(s.axisFontSize) || 18;
+        const lastRowTop = end.xLabel.y + (end.xLabel.lines.length - 1) * fontPx * 1.35;
+        expect(lastRowTop + fontPx / 2).toBeCloseTo(end.pad.top + end.ph, 5);
     });
 
     it('a long X title at the axis end wraps instead of squeezing the plot', () => {
@@ -195,7 +197,10 @@ describe('axis title placement', () => {
         expect(above.pad.top).toBeGreaterThan(side.pad.top);               // room for the title above
         expect(above.yLabel.placement).toBe('above');
         expect(above.yLabel.x).toBe(above.pad.left);
-        expect(above.yLabel.y + 18 * 1.35).toBeLessThanOrEqual(above.pad.top);
+        // 10px between the text and the top of the axis (the empty 0.35em below the glyphs is not counted)
+        const fontPx = parseInt(s.axisFontSize) || 18;
+        const textBottom = above.yLabel.y + fontPx * 1.35 - fontPx * 0.35;
+        expect(above.pad.top - textBottom).toBeCloseTo(10, 5);
         // a long title never sticks out on the left
         s.yLabelRuns = textToRuns('A very long horizontal Y axis title that is wider than the margin');
         const long = computeLayout(s, 850, 680);
@@ -257,5 +262,23 @@ describe('line ends', () => {
         s.charts[0].lineCap = 'butt';
         const svg = buildVectorSVG(s, { mode: 'classic' });
         expect(svg).toMatch(/<path d="[^"]+" fill="none" stroke="[^"]+" stroke-width="[^"]+" stroke-linejoin="round" stroke-linecap="butt"\/>/);
+    });
+});
+
+describe('frame lines', () => {
+    it('are square: butt caps and the corners are filled by extending the sides', () => {
+        const s = makeDefaultState();
+        s.borderWidth = 4;
+        const l = computeLayout(s, 850, 680);
+        const segs = borderSegments(s, l.pad, l.pw, l.ph);
+        expect(segs.map(g => g.side)).toEqual(['top', 'right', 'bottom', 'left']);
+        const top = segs[0];
+        expect(top.x1).toBe(l.pad.left - 2);
+        expect(top.x2).toBe(l.pad.left + l.pw + 2);
+        const svg = buildVectorSVG(s, { mode: 'classic' });
+        expect(svg).toContain('stroke-linecap="butt"');
+        // a side without a neighbour is not extended
+        s.borderLeft = false;
+        expect(borderSegments(s, l.pad, l.pw, l.ph)[0].x1).toBe(l.pad.left);
     });
 });

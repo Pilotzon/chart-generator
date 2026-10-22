@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
+import { usePlaceholder } from '../../lib/placeholders.js';
 import { IconCopy, IconPencil, IconPlus, IconTrash } from '../controls/Icons.jsx';
 
 function ChartTab({ chart, active, canDelete }) {
     const { actions, setPendingDeleteChartId } = useApp();
     const [editing, setEditing] = useState(false);
     const inputRef = useRef(null);
+    const chartNamePlaceholder = usePlaceholder('chartName');
 
     useEffect(() => {
         if (editing && inputRef.current) {
@@ -36,6 +38,7 @@ function ChartTab({ chart, active, canDelete }) {
                         className="chart-tab-name-input"
                         dir="auto"
                         spellCheck={false}
+                        placeholder={chartNamePlaceholder}
                         value={chart.name}
                         onClick={e => e.stopPropagation()}
                         onChange={e => actions.patchChart(chart.id, { name: e.target.value })}

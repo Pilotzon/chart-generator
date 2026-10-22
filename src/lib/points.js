@@ -38,3 +38,9 @@ export function detectLabelOverlap(chart, pointIndex) {
 export const sortedPoints = chart => [...chart.points].sort((a, b) => a.x - b.x);
 
 export const getLegendCharts = state => state.charts.filter(c => c.name && c.name.trim());
+
+/** Stable key of the point picked on the canvas ('chartId:index'), or null. */
+export function selectedPointKey(interaction) {
+    if (!interaction || interaction.selectedIdx == null || !interaction.selectedChartId) return null;
+    return `${interaction.selectedChartId}:${interaction.selectedIdx}`;
+}

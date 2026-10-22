@@ -446,7 +446,7 @@
 .edge-sketch-line {
     position: absolute;
     background: rgba(60, 56, 46, 0.14);
-    border-radius: 1px;
+    border-radius: 0; /* the frame is square, so is its sketch */
     transition: background 0.15s var(--ease-smooth);
     pointer-events: none;
 }
@@ -583,3 +583,102 @@
 .export-split.is-dark.is-open .export-split-chev { background: rgba(255, 255, 255, 0.2); color: #fff; }
 .export-split.is-dark .export-split-main:focus-visible,
 .export-split.is-dark .export-split-chev:focus-visible { outline-color: rgba(255, 255, 255, 0.7); }
+
+
+/* ─────────────────────────────────────────────
+   Round 7 — placeholders, locked options, checkboxes, point highlight
+   ───────────────────────────────────────────── */
+
+/* ── Funny grey placeholders (rich-text boxes and plain inputs) ── */
+.rich-text-editor:empty { direction: ltr; text-align: left; }
+.rich-text-editor:empty::before {
+    font-style: italic;
+    color: var(--text-quaternary);
+    transition: opacity 0.15s var(--ease-smooth);
+}
+.rich-text-editor:empty:focus::before { opacity: 0.55; }
+.marked-input::placeholder,
+.chart-tab-name-input::placeholder {
+    color: var(--text-quaternary);
+    font-style: italic;
+    opacity: 1;
+}
+
+/* ── Options locked until their text exists ── */
+.control-row { transition: opacity 0.18s var(--ease-smooth); }
+.control-row[data-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    user-select: none;
+}
+.control-row[data-disabled="true"] .align-btn.is-on { background: var(--bg-app); color: var(--text-quaternary); box-shadow: none; }
+.btn:disabled,
+.btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-app);
+    border-style: dashed;
+    color: var(--text-tertiary);
+    transform: none;
+    box-shadow: none;
+}
+.btn-add-subtitle { margin-top: 4px; }
+.subtitle-inline-inner { display: flex; flex-direction: column; gap: 12px; }
+
+/* ── Checkboxes: rounder corners, slate-blue border, blue when on ── */
+input[type="checkbox"]:not(.toggle-switch input) {
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    border: 1.5px solid #8497B3;
+    border-radius: 6px;
+    background: var(--bg-input, #fff);
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background 0.15s var(--ease-smooth), border-color 0.15s var(--ease-smooth), box-shadow 0.15s var(--ease-smooth);
+}
+input[type="checkbox"]:not(.toggle-switch input)::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1.5px;
+    width: 4px;
+    height: 8px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    border-radius: 1px;
+    transform: rotate(45deg) scale(0);
+    transition: transform 0.16s var(--ease-smooth);
+}
+input[type="checkbox"]:not(.toggle-switch input):hover { border-color: #2C7BD7; background: rgba(44, 123, 215, 0.07); }
+input[type="checkbox"]:not(.toggle-switch input):focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(44, 123, 215, 0.28); }
+input[type="checkbox"]:not(.toggle-switch input):checked {
+    background: #2C7BD7;
+    border-color: #2C7BD7;
+    animation: checkPop 0.22s var(--ease-out);
+}
+input[type="checkbox"]:not(.toggle-switch input):checked::after { transform: rotate(45deg) scale(1); }
+input[type="checkbox"]:not(.toggle-switch input):disabled { opacity: 0.45; cursor: not-allowed; }
+@keyframes checkPop { 0% { transform: scale(0.82); } 60% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+/* ── Points table: the point picked on the graph ── */
+.points-table tr.is-hovered td { background: rgba(44, 123, 215, 0.06); }
+.points-table tr.is-selected td {
+    background: rgba(44, 123, 215, 0.12);
+    animation: rowPulse 0.9s var(--ease-out);
+}
+.points-table tr.is-selected td:first-child { border-radius: 8px 0 0 8px; box-shadow: inset 3px 0 0 #2C7BD7; padding-left: 7px; }
+.points-table tr.is-selected td:last-child { border-radius: 0 8px 8px 0; }
+.points-table tr.is-selected input[type="number"] { border-color: rgba(44, 123, 215, 0.55); }
+.points-table td { transition: background 0.15s var(--ease-smooth); }
+@keyframes rowPulse {
+    0% { background: rgba(44, 123, 215, 0.38); }
+    100% { background: rgba(44, 123, 215, 0.12); }
+}
+/* "Mark" checkbox sits a little lower than the number boxes' centre line */
+.points-table td.td-mark .mark-checkbox { position: relative; top: 4px; }
+.points-table th.th-advanced { text-align: center; }
