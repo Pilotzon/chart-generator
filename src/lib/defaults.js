@@ -81,6 +81,7 @@ export function defaultStateBase() {
         showVerticalGrid: true,
         showHorizontalGrid: true,
         showTicks: true,
+        showTickLabels: true,
 
         borderTop: true,
         borderRight: true,

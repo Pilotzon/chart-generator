@@ -6,7 +6,7 @@ import { runsToPlainText } from '../../lib/richText.js';
 import { ChartLines, clamp01 } from '../controls/Sketches.jsx';
 import { RichTextEditor } from '../richtext/RichTextEditor.jsx';
 import {
-    ColorRow, Divider, DropdownRow, FontRow, RangeRow, Reveal, StepperRow, ToggleRow
+    AlignRow, ColorRow, Divider, DropdownRow, FontRow, RangeRow, Reveal, StepperRow, ToggleRow
 } from '../controls/Inputs.jsx';
 
 const fmt = (n) => String(+Number(n).toFixed(2));
@@ -49,7 +49,7 @@ function ColumnEditor({ column, caret, onClose }) {
                     onChange={runs => patch({ runs })}
                 />
             </div>
-            <DropdownRow label="Alignment" value={cfg.align} options={COLUMN_ALIGN_OPTIONS} onChange={v => patch({ align: v })} />
+            <AlignRow label="Alignment" value={cfg.align} options={COLUMN_ALIGN_OPTIONS} onChange={v => patch({ align: v })} />
             <DropdownRow label="Placement" value={cfg.placement} options={COLUMN_PLACEMENT_OPTIONS} onChange={v => patch({ placement: v })} />
             <ToggleRow label="Background" checked={cfg.bgEnabled} onChange={v => patch({ bgEnabled: v })} />
             <Reveal show={cfg.bgEnabled}>

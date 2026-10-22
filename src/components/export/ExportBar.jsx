@@ -9,6 +9,34 @@ import { Dropdown } from '../controls/Dropdown.jsx';
 import { IconChevronDown, IconDownload } from '../controls/Icons.jsx';
 import { CheckRow, ExportPopover } from './ExportPopover.jsx';
 
+/** One bordered rounded rectangle: a wide label zone + a small chevron zone, each with its own hover. */
+function SplitButton({ label, variant = 'light', open, mainOpens, onMain, onChevron, chevronLabel }) {
+    return (
+        <div className={`export-split is-${variant} ${open ? 'is-open' : ''}`}>
+            <button
+                type="button"
+                className="export-split-main"
+                aria-haspopup={mainOpens ? 'dialog' : undefined}
+                aria-expanded={mainOpens ? open : undefined}
+                onClick={onMain}
+            >
+                <IconDownload width={15} height={15} />
+                {label}
+            </button>
+            <button
+                type="button"
+                className="export-split-chev"
+                aria-label={chevronLabel}
+                aria-haspopup="dialog"
+                aria-expanded={open}
+                onClick={onChevron}
+            >
+                <IconChevronDown width={13} height={13} />
+            </button>
+        </div>
+    );
+}
+
 export function ExportBar() {
     const { state, mode, setExportSettings, toast } = useApp();
     const settings = useEffectiveExport();
@@ -51,32 +79,20 @@ export function ExportBar() {
     const scale = settings.png.scale;
     const dims = `${Math.round(width * scale)} × ${Math.round(height * scale)} px`;
 
+    const toggleSvg = () => setOpen(open === 'svg' ? null : 'svg');
+    const togglePng = () => setOpen(open === 'png' ? null : 'png');
+
     return (
         <div className="export-bar">
             <div className="export-menu" ref={svgRef}>
-                {/* One bordered button, two hover zones: the wide label zone and the small chevron zone */}
-                <div className={`export-split ${open === 'svg' ? 'is-open' : ''}`}>
-                    <button
-                        type="button"
-                        className="export-split-main"
-                        aria-haspopup="dialog"
-                        aria-expanded={open === 'svg'}
-                        onClick={() => setOpen(open === 'svg' ? null : 'svg')}
-                    >
-                        <IconDownload width={15} height={15} />
-                        SVG
-                    </button>
-                    <button
-                        type="button"
-                        className="export-split-chev"
-                        aria-label="SVG options"
-                        aria-haspopup="dialog"
-                        aria-expanded={open === 'svg'}
-                        onClick={() => setOpen(open === 'svg' ? null : 'svg')}
-                    >
-                        <IconChevronDown width={13} height={13} />
-                    </button>
-                </div>
+                <SplitButton
+                    label="SVG"
+                    open={open === 'svg'}
+                    mainOpens
+                    onMain={toggleSvg}
+                    onChevron={toggleSvg}
+                    chevronLabel="SVG options"
+                />
                 {open === 'svg' && (
                     <ExportPopover title="SVG export" onClose={close} anchorRef={svgRef}>
                         <CheckRow
@@ -107,53 +123,46 @@ export function ExportBar() {
             </div>
 
             <div className="export-menu" ref={pngRef}>
-                {advanced ? (
-                    <>
-                        <button
-                            type="button"
-                            className="btn btn-primary"
-                            aria-haspopup="dialog"
-                            aria-expanded={open === 'png'}
-                            onClick={() => setOpen(open === 'png' ? null : 'png')}
-                        >
-                            <IconDownload width={15} height={15} />
-                            PNG
-                            <IconChevronDown width={12} height={12} />
-                        </button>
-                        {open === 'png' && (
-                            <ExportPopover title="PNG export" onClose={close} anchorRef={pngRef}>
-                                <div className="export-popover-row">
-                                    <label className="export-popover-label">Resolution</label>
-                                    <Dropdown
-                                        value={settings.png.scale}
-                                        options={PNG_SCALE_OPTIONS}
-                                        onChange={v => setFormat('png', { scale: Number(v) })}
-                                    />
-                                </div>
-                                <div className="export-popover-hint">
-                                    {dims}
-                                </div>
-                                <CheckRow
-                                    label="Background"
-                                    checked={settings.png.bgEnabled}
-                                    onChange={v => setFormat('png', { bgEnabled: v })}
-                                >
-                                    {settings.png.bgEnabled && (
-                                        <ColorInput value={settings.png.bgColor} onChange={v => setFormat('png', { bgColor: v })} />
-                                    )}
-                                </CheckRow>
-                                <button type="button" className="btn btn-primary export-popover-action" onClick={doPNG}>
-                                    <IconDownload width={15} height={15} />
-                                    Download PNG
-                                </button>
-                            </ExportPopover>
+                {/* Classic: the label downloads straight away, the chevron holds the resolution.
+                    Advanced: both zones open the popup, like SVG. */}
+                <SplitButton
+                    label={advanced ? 'PNG' : 'Export PNG'}
+                    variant="dark"
+                    open={open === 'png'}
+                    mainOpens={advanced}
+                    onMain={advanced ? togglePng : doPNG}
+                    onChevron={togglePng}
+                    chevronLabel="PNG options"
+                />
+                {open === 'png' && (
+                    <ExportPopover title="PNG export" onClose={close} anchorRef={pngRef}>
+                        <div className="export-popover-row">
+                            <label className="export-popover-label">Resolution</label>
+                            <Dropdown
+                                value={settings.png.scale}
+                                options={PNG_SCALE_OPTIONS}
+                                onChange={v => setFormat('png', { scale: Number(v) })}
+                            />
+                        </div>
+                        <div className="export-popover-hint">
+                            {dims}
+                        </div>
+                        {advanced && (
+                            <CheckRow
+                                label="Background"
+                                checked={settings.png.bgEnabled}
+                                onChange={v => setFormat('png', { bgEnabled: v })}
+                            >
+                                {settings.png.bgEnabled && (
+                                    <ColorInput value={settings.png.bgColor} onChange={v => setFormat('png', { bgColor: v })} />
+                                )}
+                            </CheckRow>
                         )}
-                    </>
-                ) : (
-                    <button type="button" className="btn btn-primary" onClick={doPNG}>
-                        <IconDownload width={15} height={15} />
-                        Export PNG
-                    </button>
+                        <button type="button" className="btn btn-primary export-popover-action" onClick={doPNG}>
+                            <IconDownload width={15} height={15} />
+                            Download PNG
+                        </button>
+                    </ExportPopover>
                 )}
             </div>
         </div>

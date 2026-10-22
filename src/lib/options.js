@@ -18,9 +18,9 @@ export const MARKER_OPTIONS = [
 ];
 
 export const TITLE_POSITION_OPTIONS = [
-    { value: 'top-center', label: 'Center' },
-    { value: 'top-left', label: 'Left' },
-    { value: 'top-right', label: 'Right' }
+    { value: 'top-left', label: 'Left', icon: 'top-left' },
+    { value: 'top-center', label: 'Center', icon: 'top-center' },
+    { value: 'top-right', label: 'Right', icon: 'top-right' }
 ];
 
 export const GRID_STYLE_OPTIONS = [

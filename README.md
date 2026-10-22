@@ -49,11 +49,14 @@ tests/                      vitest suites
   alignment (left / center / right), placement (above / below the grid) and an optional background colour with opacity.
 * **Sketch pickers** (clickable mini charts, `components/controls/Sketches.jsx`): column titles (solid separators,
   number at the bottom, the selected column's ring follows the frame's rounded corners), border lines and axis-arrow
-  sides (click the edges of a frame), legend position (four corner chips), title position (left / center / right)
+  sides (click the edges of a frame), legend position (four corner chips)
   and, in Advanced mode, marked points (click a dot to open its card below with a caret).
-* **Export**: the SVG button is one bordered rounded rectangle with a wide label zone and a small chevron zone (each
-  highlights on its own hover); both open the SVG popup with *Flip text for MS Word macOS* above *Download SVG*.
-  PNG is a primary button (classic: direct download; advanced: popup with resolution / background).
+* **Alignment inputs** (title alignment, column title alignment) are three icon buttons (left / center / right).
+* **Tick numbers** can be hidden in Advanced mode (*Text* tab → *Show Tick Numbers*); the space they reserved is released too.
+* **Export**: no bar background or border, just two bordered split buttons, each with a wide label zone and a small
+  chevron zone that highlight on their own. SVG: both zones open the popup with *Flip text for MS Word macOS* above
+  *Download SVG*. PNG (dark): Advanced → both zones open the popup (resolution, background); Classic → the label
+  downloads directly and the chevron opens a popup with the resolution.
   Shortcuts: Ctrl/Cmd+S → PNG, Ctrl/Cmd+E → SVG.
 * **Flip text for MS Word macOS**: Word on macOS draws SVG text left-to-right without bidi, so Hebrew / Arabic comes out
   mirrored. With the option on, every text line that contains Hebrew / Arabic letters is stored in *visual* order:

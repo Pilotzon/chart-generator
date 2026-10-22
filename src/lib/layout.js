@@ -60,6 +60,8 @@ export function computeLayout(state, W, H, opts = {}) {
     const tickFontPx = parseInt(state.tickFontSize) || 15;
     const axisFontPx = parseInt(state.axisFontSize) || 18;
     const colFontPx = parseInt(state.columnTitleFontSize) || 15;
+    const tickLabels = state.showTickLabels !== false;
+    const tickBlockH = tickLabels ? tickFontPx : 0;   // space under the grid taken by the tick numbers
     const tLen = state.showTicks ? (parseFloat(state.tickLength) || 7) : 0;
 
     const titleText = runsToPlainText(state.titleRuns);
@@ -83,11 +85,11 @@ export function computeLayout(state, W, H, opts = {}) {
     if (subtitleLines > 0) top += subtitleLines * (subtitleFontPx * 1.4) + 4;
     top += 15;
 
-    let bottom = tLen + tickFontPx + 15 + xLines * (axisFontPx * 1.4) + (hasX ? 20 : 5);
+    let bottom = tLen + tickBlockH + 15 + xLines * (axisFontPx * 1.4) + (hasX ? 20 : 5);
 
     const yTickCharW = tickFontPx * 0.65;
     const maxYStr = Math.max(Math.abs(state.yMin).toString().length, Math.abs(state.yMax).toString().length);
-    const yTickW = Math.max(25, maxYStr * yTickCharW);
+    const yTickW = tickLabels ? Math.max(25, maxYStr * yTickCharW) : 0;
     const left = Math.max(hasY ? 90 : 55, tLen + yTickW + 10 + yLines * (axisFontPx * 1.4) + (hasY ? 25 : 10));
     const right = 40;
 
@@ -128,7 +130,7 @@ export function computeLayout(state, W, H, opts = {}) {
     const yRange = state.yMax - state.yMin;
 
     return {
-        pad, pw, ph, W, H, tLen,
+        pad, pw, ph, W, H, tLen, tickBlockH,
         aboveBlock, belowBlock, colLineH, colFontPx,
         columnTitles,
         mapX: x => pad.left + ((x - state.xMin) / xRange) * pw,

@@ -1,3 +1,4 @@
+import { SvgIcon } from './SvgIcon.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { IconMinus, IconPlus } from './Icons.jsx';
 import { Dropdown } from './Dropdown.jsx';
@@ -130,6 +131,32 @@ export function RangeRow({ label, className, ...range }) {
 
 export function DropdownRow({ label, className, ...dd }) {
     return <Row label={label} className={className}><Dropdown {...dd} /></Row>;
+}
+
+/** Segmented 3-button picker (left / center / right) drawn with the text-align glyphs. */
+export function AlignButtons({ value, options, onChange }) {
+    return (
+        <div className="align-buttons" role="radiogroup">
+            {options.map(opt => (
+                <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={value === opt.value}
+                    aria-label={opt.label}
+                    title={opt.label}
+                    className={`align-btn ${value === opt.value ? 'is-on' : ''}`}
+                    onClick={() => onChange(opt.value)}
+                >
+                    <SvgIcon name={opt.icon} className="align-btn-icon" />
+                </button>
+            ))}
+        </div>
+    );
+}
+
+export function AlignRow({ label, className, ...props }) {
+    return <Row label={label} className={className}><AlignButtons {...props} /></Row>;
 }
 
 export function FontRow({ label = 'Font', value, onChange }) {

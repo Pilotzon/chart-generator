@@ -181,12 +181,13 @@ export function buildVectorSVG(state, opts = {}) {
     }
 
     const tickText = v => (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1));
-    for (let i = 0; i <= totalXSteps; i += state.xSubDiv) {
+    const showTickLabels = state.showTickLabels !== false;
+    for (let i = 0; showTickLabels && i <= totalXSteps; i += state.xSubDiv) {
         const xVal = state.xMin + i * xSubStep;
         if (xVal > state.xMax + 0.001) break;
         svg += `<text x="${mapX(xVal)}" y="${pad.top + ph + tLen + 4 + tickFontPx * 0.82}" font-family="${escXml(state.tickFont)}" font-size="${tickFontPx}" text-anchor="middle" dominant-baseline="auto" fill="#000">${tickText(xVal)}</text>\n`;
     }
-    for (let i = 0; i <= totalYSteps; i += state.ySubDiv) {
+    for (let i = 0; showTickLabels && i <= totalYSteps; i += state.ySubDiv) {
         const yVal = state.yMin + i * ySubStep;
         if (yVal > state.yMax + 0.001) break;
         svg += `<text x="${pad.left - tLen - 6}" y="${mapY(yVal)}" font-family="${escXml(state.tickFont)}" font-size="${tickFontPx}" text-anchor="end" dominant-baseline="central" fill="#000">${tickText(yVal)}</text>\n`;
@@ -195,7 +196,7 @@ export function buildVectorSVG(state, opts = {}) {
     // Column titles
     layout.columnTitles.forEach(ct => {
         const above = ct.placement !== 'below';
-        const startY = above ? pad.top - 6 - ct.height : pad.top + ph + tLen + tickFontPx + 10;
+        const startY = above ? pad.top - 6 - ct.height : pad.top + ph + tLen + layout.tickBlockH + 10;
         let x, anchor;
         if (ct.align === 'left') { x = ct.x0 + 6; anchor = 'start'; }
         else if (ct.align === 'right') { x = ct.x1 - 6; anchor = 'end'; }
@@ -208,7 +209,7 @@ export function buildVectorSVG(state, opts = {}) {
     const xRuns = T(state.xLabelRuns);
     if (hasText(xRuns)) {
         const lineH = axisFontPx * 1.35;
-        const startY = pad.top + ph + tLen + tickFontPx + 14 + layout.belowBlock + axisFontPx * 0.82;
+        const startY = pad.top + ph + tLen + layout.tickBlockH + 14 + layout.belowBlock + axisFontPx * 0.82;
         svg += buildSvgRichLines(mctx, splitRunsIntoLines(xRuns), pad.left + pw / 2, startY, axisFontPx, state.axisFont, 'middle', hasHebrewInRuns(xRuns), lineH);
     }
     const yRuns = T(state.yLabelRuns);

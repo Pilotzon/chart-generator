@@ -188,8 +188,17 @@
 }
 
 /* ── Export bar: SVG split button (one border, two hover zones) ── */
-.export-bar { align-items: center; }
-.export-bar .btn { gap: 7px; }
+.export-bar {
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-radius: 0;
+}
 
 .export-split {
     display: inline-flex;
@@ -453,9 +462,7 @@
 
 /* ── Position picker (legend corners / title alignment) ── */
 .pos-sketch { height: 104px; margin: 4px 0 2px; }
-.pos-sketch-title { height: 78px; }
 .pos-sketch .sketch-lines { inset: 36px 10px 12px; width: calc(100% - 20px); height: calc(100% - 48px); }
-.pos-sketch-title .sketch-lines { inset: 30px 10px 8px; height: calc(100% - 38px); }
 
 .pos-chip {
     position: absolute;
@@ -473,13 +480,11 @@
     transition: all 0.15s var(--ease-smooth);
 }
 
-.pos-sketch-title .pos-chip { width: 64px; justify-content: center; }
 .pos-chip:hover { border-color: rgba(60, 56, 46, 0.4); color: rgba(60, 56, 46, 0.6); background: rgba(60, 56, 46, 0.04); }
 .pos-chip.is-on { background: var(--text-primary); border-color: var(--text-primary); color: #fff; }
 .pos-chip:focus-visible { outline: 2px solid rgba(60, 56, 46, 0.4); outline-offset: 2px; }
 .pos-chip-swatch { width: 10px; height: 3px; border-radius: 2px; background: currentColor; flex: none; }
 .pos-chip-bar { flex: 1; height: 4px; border-radius: 2px; background: currentColor; opacity: 0.8; }
-.pos-sketch-title .pos-chip-bar { flex: none; width: 100%; }
 
 .pos-chip.v-top { top: 6px; } .pos-chip.v-bottom { bottom: 6px; }
 .pos-chip.h-left { left: 6px; } .pos-chip.h-right { right: 6px; }
@@ -517,3 +522,57 @@
     border-left: 1px solid var(--border-default);
     transform: translateX(-50%) rotate(45deg);
 }
+
+/* ── Alignment buttons (left / center / right) ── */
+.align-buttons {
+    display: inline-flex;
+    direction: ltr;
+    flex: 0 1 160px;
+    width: 160px;
+    max-width: 160px;
+    height: 34px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    overflow: hidden;
+}
+
+.align-btn {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: none;
+    border-left: 1px solid var(--border-default);
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: background 0.15s var(--ease-smooth), color 0.15s var(--ease-smooth);
+}
+
+.align-btn:first-child { border-left: none; }
+.align-btn:hover { background: rgba(60, 56, 46, 0.06); color: var(--text-primary); }
+.align-btn.is-on { background: var(--text-primary); color: #fff; }
+.align-btn:focus-visible { outline: 2px solid rgba(60, 56, 46, 0.4); outline-offset: -3px; }
+.align-btn-icon { display: grid; place-items: center; }
+.align-btn-icon svg { width: 17px; height: 17px; }
+
+/* dark (primary) variant of the split button: PNG */
+.export-split.is-dark {
+    background: var(--text-primary);
+    border-color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.export-split.is-dark:hover,
+.export-split.is-dark.is-open { border-color: var(--text-primary); }
+.export-split.is-dark.is-open { box-shadow: 0 0 0 3px rgba(60, 56, 46, 0.18); }
+.export-split.is-dark .export-split-main,
+.export-split.is-dark .export-split-chev { color: #fff; }
+.export-split.is-dark .export-split-chev { color: rgba(255, 255, 255, 0.72); }
+.export-split.is-dark .export-split-main:hover,
+.export-split.is-dark .export-split-chev:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.export-split.is-dark .export-split-main:active,
+.export-split.is-dark .export-split-chev:active { background: rgba(255, 255, 255, 0.24); }
+.export-split.is-dark.is-open .export-split-chev { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.export-split.is-dark .export-split-main:focus-visible,
+.export-split.is-dark .export-split-chev:focus-visible { outline-color: rgba(255, 255, 255, 0.7); }

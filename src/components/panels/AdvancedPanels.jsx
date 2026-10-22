@@ -49,7 +49,7 @@ export function TextPanel() {
             <Group title="Axis text">
                 <AxisLabelsBlock />
                 <Divider />
-                <TickLabelsBlock />
+                <TickLabelsBlock allowHide />
             </Group>
         </>
     );

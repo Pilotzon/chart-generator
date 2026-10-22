@@ -57,7 +57,7 @@ describe('classic mode', () => {
         expect(q('#graphCanvas').width).toBe(850);
         expect(q('.rail-btn')).toBeNull();
         // classic PNG button exports directly
-        await click(q('.export-menu > .btn-primary'));
+        await click(q('.export-menu:nth-child(2) .export-split-main'));
         expect(downloads.map(d => d.name)).toEqual(['graph-studio-export.png']);
     });
 
@@ -91,7 +91,9 @@ describe('classic mode', () => {
         expect(split.children).toHaveLength(2);
         expect(split.children[0].className).toBe('export-split-main');
         expect(split.children[1].className).toBe('export-split-chev');
-        expect(byText('.export-bar .btn-primary', 'Export PNG')).not.toBeNull();
+        expect(byText('.export-menu:nth-child(2) .export-split-main', 'Export PNG')).not.toBeNull();
+        expect(qa('.export-split')).toHaveLength(2);
+        expect(q('.export-split.is-dark')).not.toBeNull();
         expect(q('.export-pill')).toBeNull();
         await click(q('.export-split-chev'));
         expect(q('.export-popover')).not.toBeNull();
@@ -167,15 +169,37 @@ describe('classic mode', () => {
         expect(q('.border-toggle')).toBeNull();
     });
 
-    it('title position: pick left / right / center in the frame sketch', async () => {
+    it('title alignment is a row of 3 icon buttons, not a dropdown', async () => {
         await render();
         await click(byText('.group-title-text', 'Titles & Labels'));
-        const chips = qa('.pos-sketch-title .pos-chip');
-        expect(chips).toHaveLength(3);
-        await click(chips[1]);
-        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').titlePosition).toBe(chips[1].title === 'Left' ? 'top-left' : 'top-right');
-        expect(chips[1].getAttribute('aria-checked')).toBe('true');
-        expect(chips.filter(c => c.getAttribute('aria-checked') === 'true')).toHaveLength(1);
+        const btns = qa('.align-buttons .align-btn');
+        expect(btns.map(b => b.title)).toEqual(['Left', 'Center', 'Right']);
+        expect(btns.every(b => b.querySelector('svg'))).toBe(true);
+        expect(btns[1].getAttribute('aria-checked')).toBe('true');
+        await click(btns[0]);
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').titlePosition).toBe('top-left');
+        expect(btns[0].getAttribute('aria-checked')).toBe('true');
+        expect(btns.filter(c => c.getAttribute('aria-checked') === 'true')).toHaveLength(1);
+        expect(q('.pos-sketch-title')).toBeNull();
+    });
+
+    it('column alignment uses the same 3 buttons', async () => {
+        await render();
+        await click(byText('.group-title-text', 'Column Titles'));
+        await click(qa('.col-sketch-col')[1]);
+        const btns = qa('.col-editor .align-btn');
+        expect(btns).toHaveLength(3);
+        await click(btns[2]);
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').columns[1].align).toBe('right');
+    });
+
+    it('classic PNG chevron holds the resolution (no background option)', async () => {
+        await render();
+        await click(q('.export-menu:nth-child(2) .export-split-chev'));
+        const pop = q('.export-popover');
+        expect(pop.textContent).toContain('Resolution');
+        expect(pop.textContent).not.toContain('Background');
+        expect(downloads).toHaveLength(0);
     });
 });
 
@@ -227,7 +251,7 @@ describe('advanced mode', () => {
         const svg = await blobs.at(-1).text();
                 expect(svg).toContain('<rect'); // background
 
-        await click(q('.export-menu > .btn-primary'));
+        await click(q('.export-menu:nth-child(2) .export-split-main'));
         pop = q('.export-popover');
         expect(pop.textContent).toContain('Resolution');
         expect(pop.textContent).toContain('1700 × 1360 px');
@@ -284,6 +308,39 @@ describe('advanced mode', () => {
 });
 
 describe('advanced sketches', () => {
+    it('tick numbers can be switched off (advanced only)', async () => {
+        await render();
+        const lastDraw = () => {
+            const calls = q('#graphCanvas').getContext('2d').calls;
+            const i = calls.map(c => c[0]).lastIndexOf('clearRect');
+            return calls.slice(i + 1).filter(c => c[0] === 'fillText').map(c => c[1]);
+        };
+        expect(lastDraw()).toContain('50');
+        await goAdvanced();
+        await click(q('.rail-btn[data-panel="text"]'));
+        const row = qa('.control-row').find(r => r.textContent.includes('Show Tick Numbers'));
+        expect(row).toBeTruthy();
+        await click(row.querySelector('input'));
+        expect(stored('GRAPH_STUDIO_PRO_V13_ADVANCED').showTickLabels).toBe(false);
+        expect(lastDraw()).not.toContain('50');
+        // the SVG has no tick numbers either
+        await click(q('.export-split-main'));
+        await click(byText('.btn', 'Download SVG', q('.export-popover')));
+        const svg = await blobs.at(-1).text();
+        expect(svg).not.toMatch(/>50<\/text>/);
+    });
+
+    it('PNG is a dark split button in advanced mode; both zones open the popup', async () => {
+        await render();
+        await goAdvanced();
+        await click(q('.export-menu:nth-child(2) .export-split-main'));
+        expect(q('.export-popover').textContent).toContain('Resolution');
+        expect(q('.export-popover').textContent).toContain('Background');
+        await click(q('.export-menu:nth-child(2) .export-split-chev'));
+        expect(q('.export-popover')).toBeNull();
+        expect(downloads).toHaveLength(0);
+    });
+
     it('marked points: click a dot to open its card below the sketch', async () => {
         await render();
         await goAdvanced();

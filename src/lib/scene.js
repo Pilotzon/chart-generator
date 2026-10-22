@@ -148,9 +148,10 @@ export function drawScene(ctx, state, opts) {
         }
     }
 
-    // ── Tick labels
+    // ── Tick labels (can be switched off in Advanced mode)
     const tickText = v => (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1));
-    for (let i = 0; i <= totalXSteps; i += state.xSubDiv) {
+    const showTickLabels = state.showTickLabels !== false;
+    for (let i = 0; showTickLabels && i <= totalXSteps; i += state.xSubDiv) {
         const xVal = state.xMin + i * xSubStep;
         if (xVal > state.xMax + 0.001) break;
         ctx.fillStyle = '#000';
@@ -160,7 +161,7 @@ export function drawScene(ctx, state, opts) {
         ctx.direction = 'ltr';
         ctx.fillText(tickText(xVal), mapX(xVal), pad.top + ph + tLen + 4);
     }
-    for (let i = 0; i <= totalYSteps; i += state.ySubDiv) {
+    for (let i = 0; showTickLabels && i <= totalYSteps; i += state.ySubDiv) {
         const yVal = state.yMin + i * ySubStep;
         if (yVal > state.yMax + 0.001) break;
         ctx.fillStyle = '#000';
@@ -176,7 +177,7 @@ export function drawScene(ctx, state, opts) {
         const above = ct.placement !== 'below';
         const startY = above
             ? pad.top - 6 - ct.height
-            : pad.top + ph + tLen + tickFontPx + 10;
+            : pad.top + ph + tLen + layout.tickBlockH + 10;
         let x, anchor;
         if (ct.align === 'left') { x = ct.x0 + 6; anchor = 'left'; }
         else if (ct.align === 'right') { x = ct.x1 - 6; anchor = 'right'; }
@@ -191,7 +192,7 @@ export function drawScene(ctx, state, opts) {
     const xRuns = T(state.xLabelRuns);
     if (hasText(xRuns)) {
         const lineH = axisFontPx * 1.35;
-        const startY = pad.top + ph + tLen + tickFontPx + 14 + layout.belowBlock;
+        const startY = pad.top + ph + tLen + layout.tickBlockH + 14 + layout.belowBlock;
         const cx = pad.left + pw / 2;
         ctx.textBaseline = 'top';
         const n = drawRichText(ctx, xRuns, cx, startY, axisFontPx, state.axisFont, 'center', hasHebrewInRuns(xRuns), lineH);

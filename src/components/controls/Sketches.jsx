@@ -68,13 +68,13 @@ export function EdgeSketch({ prefix, values, onToggle, titleSuffix = 'border', c
 }
 
 /* ─────────────────────────────────────────────
-   Position picker: click where the title / legend should sit inside a little frame.
-   Option values look like "top-left", "bottom-right" or "top-center".
+   Position picker: click the corner where the legend should sit inside a little frame.
+   Option values look like "top-left" or "bottom-right".
    ───────────────────────────────────────────── */
-export function PositionSketch({ options, value, onChange, kind = 'legend' }) {
+export function PositionSketch({ options, value, onChange }) {
     const { state } = useSettings();
     return (
-        <div className={`sketch-frame pos-sketch pos-sketch-${kind}`} role="radiogroup">
+        <div className={`sketch-frame pos-sketch pos-sketch-legend`} role="radiogroup">
             <ChartLines state={state} />
             {options.map(opt => {
                 const v = opt.value.includes('bottom') ? 'bottom' : 'top';
@@ -90,7 +90,7 @@ export function PositionSketch({ options, value, onChange, kind = 'legend' }) {
                         className={`pos-chip v-${v} h-${h} ${on ? 'is-on' : ''}`}
                         onClick={() => onChange(opt.value)}
                     >
-                        {kind === 'legend' && <span className="pos-chip-swatch" />}
+                        <span className="pos-chip-swatch" />
                         <span className="pos-chip-bar" />
                     </button>
                 );
