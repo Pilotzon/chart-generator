@@ -1,54 +1,46 @@
+import { useState } from 'react';
 import { useSettings } from '../../hooks/useSettings.js';
 import { getColumnConfig, getColumns } from '../../lib/layout.js';
 import { COLUMN_ALIGN_OPTIONS, COLUMN_PLACEMENT_OPTIONS } from '../../lib/options.js';
+import { runsToPlainText } from '../../lib/richText.js';
 import { RichTextEditor } from '../richtext/RichTextEditor.jsx';
 import {
     ColorRow, Divider, DropdownRow, FontRow, RangeRow, Reveal, StepperRow, ToggleRow
 } from '../controls/Inputs.jsx';
 
-const withDefault = (options, label) => [{ value: '', label }, ...options];
 const fmt = (n) => String(+Number(n).toFixed(2));
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
-/** Shared settings for all column titles. */
+/** Font + size are shared by every column title; alignment and placement are per column. */
 export function ColumnDefaultsBlock() {
     const { state, set } = useSettings();
     return (
         <>
             <p className="hint-text" style={{ marginTop: 0 }}>
-                One column per major X step. Titles use these defaults unless a column overrides them.
+                Font and size apply to all column titles. Alignment, placement and background are set per column.
             </p>
             <FontRow value={state.columnTitleFont} onChange={v => set('columnTitleFont', v)} />
             <StepperRow label="Size" min={8} max={40} value={state.columnTitleFontSize} onChange={v => set('columnTitleFontSize', v)} />
-            <DropdownRow
-                label="Alignment"
-                value={state.columnDefaultAlign}
-                options={COLUMN_ALIGN_OPTIONS}
-                onChange={v => set('columnDefaultAlign', v)}
-            />
-            <DropdownRow
-                label="Placement"
-                value={state.columnDefaultPlacement}
-                options={COLUMN_PLACEMENT_OPTIONS}
-                onChange={v => set('columnDefaultPlacement', v)}
-            />
         </>
     );
 }
 
-function ColumnCard({ column }) {
+/** Editor menu for one column; it opens right below the sketch, with a caret under that column. */
+function ColumnEditor({ column, caret, onClose }) {
     const { state, actions } = useSettings();
     const raw = (state.columns || {})[column.index] || {};
     const cfg = getColumnConfig(state, column.index);
     const patch = (partial) => actions.patchColumn(column.index, partial);
     return (
-        <div className="marked-point-card column-card">
-            <div className="marked-point-header">
-                <span
-                    className="marker-swatch"
-                    style={{ background: cfg.bgEnabled ? cfg.bgColor : 'transparent', opacity: cfg.bgEnabled ? Math.max(0.35, cfg.bgOpacity) : 1 }}
-                />
-                <span>Column {column.index + 1}</span>
+        <div className="col-editor" style={{ '--caret-x': `${caret}%` }}>
+            <div className="col-editor-header">
+                <span className="col-editor-title">Column {column.index + 1}</span>
                 <span className="coords">({fmt(column.from)} – {fmt(column.to)})</span>
+                <button type="button" className="icon-btn icon-btn-small col-editor-close" onClick={onClose} aria-label="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
             </div>
             <div className="rich-text-wrapper">
                 <RichTextEditor
@@ -57,18 +49,8 @@ function ColumnCard({ column }) {
                     onChange={runs => patch({ runs })}
                 />
             </div>
-            <DropdownRow
-                label="Alignment"
-                value={raw.align || ''}
-                options={withDefault(COLUMN_ALIGN_OPTIONS, 'Default')}
-                onChange={v => patch({ align: v || null })}
-            />
-            <DropdownRow
-                label="Placement"
-                value={raw.placement || ''}
-                options={withDefault(COLUMN_PLACEMENT_OPTIONS, 'Default')}
-                onChange={v => patch({ placement: v || null })}
-            />
+            <DropdownRow label="Alignment" value={cfg.align} options={COLUMN_ALIGN_OPTIONS} onChange={v => patch({ align: v })} />
+            <DropdownRow label="Placement" value={cfg.placement} options={COLUMN_PLACEMENT_OPTIONS} onChange={v => patch({ placement: v })} />
             <ToggleRow label="Background" checked={cfg.bgEnabled} onChange={v => patch({ bgEnabled: v })} />
             <Reveal show={cfg.bgEnabled}>
                 <ColorRow label="Color" value={cfg.bgColor} onChange={v => patch({ bgColor: v })} />
@@ -78,22 +60,86 @@ function ColumnCard({ column }) {
     );
 }
 
-export function ColumnListBlock() {
+/**
+ * Little sketch of the chart split into its columns. Click a column to open its menu below it.
+ */
+export function ColumnSketchBlock() {
     const { state } = useSettings();
+    const [selected, setSelected] = useState(null);
     const columns = getColumns(state);
+
     if (columns.length === 0) {
         return <p className="hint-text" style={{ marginTop: 0 }}>Set a valid X-axis range and step to create columns.</p>;
     }
-    return <div>{columns.map(c => <ColumnCard key={c.index} column={c} />)}</div>;
+
+    const span = state.xMax - state.xMin;
+    const ySpan = state.yMax - state.yMin || 1;
+    const showNumbers = columns.length <= 16;
+    const active = columns.find(c => c.index === selected) || null;
+    const caret = active ? ((active.from + active.to) / 2 - state.xMin) / span * 100 : 50;
+
+    return (
+        <div className="col-sketch">
+            <div className="col-sketch-frame">
+                <svg className="col-sketch-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                    {state.charts.map(chart => {
+                        const pts = [...chart.points].sort((a, b) => a.x - b.x).map(p => {
+                            const x = clamp01((p.x - state.xMin) / span) * 100;
+                            const y = (1 - clamp01((p.y - state.yMin) / ySpan)) * 100;
+                            return `${x.toFixed(2)},${y.toFixed(2)}`;
+                        });
+                        return (
+                            <polyline
+                                key={chart.id}
+                                points={pts.join(' ')}
+                                fill="none"
+                                stroke={chart.color}
+                                strokeWidth="2"
+                                strokeLinejoin="round"
+                                vectorEffect="non-scaling-stroke"
+                            />
+                        );
+                    })}
+                </svg>
+                {columns.map(col => {
+                    const cfg = getColumnConfig(state, col.index);
+                    const title = runsToPlainText(cfg.runs || []).trim();
+                    return (
+                        <button
+                            key={col.index}
+                            type="button"
+                            className={`col-sketch-col ${selected === col.index ? 'selected' : ''}`}
+                            title={`Column ${col.index + 1} (${fmt(col.from)} – ${fmt(col.to)})`}
+                            style={{
+                                left: `${(col.from - state.xMin) / span * 100}%`,
+                                width: `${(col.to - col.from) / span * 100}%`,
+                                '--col-bg': cfg.bgEnabled ? cfg.bgColor : 'transparent',
+                                '--col-bg-opacity': cfg.bgEnabled ? clamp01(parseFloat(cfg.bgOpacity)) : 0
+                            }}
+                            onClick={() => setSelected(selected === col.index ? null : col.index)}
+                        >
+                            {title && (
+                                <span className={`col-sketch-title ${cfg.placement} align-${cfg.align}`} dir="auto">{title}</span>
+                            )}
+                            {showNumbers && <span className="col-sketch-num">{col.index + 1}</span>}
+                        </button>
+                    );
+                })}
+            </div>
+            {active
+                ? <ColumnEditor key={active.index} column={active} caret={caret} onClose={() => setSelected(null)} />
+                : <p className="hint-text col-sketch-hint">Click a column to edit its title and background.</p>}
+        </div>
+    );
 }
 
-/** Classic: defaults + per-column cards in one group. */
+/** Classic: shared settings + the sketch in one group. */
 export function ClassicColumnsGroupBody() {
     return (
         <>
             <ColumnDefaultsBlock />
             <Divider />
-            <ColumnListBlock />
+            <ColumnSketchBlock />
         </>
     );
 }

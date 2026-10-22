@@ -96,10 +96,6 @@
     display: flex;
 }
 
-.export-bar .btn { gap: 7px; }
-.export-bar .btn.is-open { background: rgba(60, 56, 46, 0.1); }
-.export-bar .btn-primary.is-open { background: var(--text-primary); }
-.export-chevron { opacity: 0.6; margin-left: -2px; }
 
 .export-popover {
     position: absolute;
@@ -179,3 +175,221 @@
 }
 
 .export-popover input[type="color"] { width: 24px; height: 24px; }
+
+/* ── Same-width controls: every range input matches the dropdown / stepper width ── */
+.control-row > .custom-dropdown,
+.control-row > .number-stepper,
+.control-row > .dual-input,
+.control-row > input[type="range"] {
+    flex: 0 1 160px;
+    width: 160px;
+    max-width: 160px;
+    min-width: 0;
+}
+
+/* ── Export pill (SVG | PNG) — light version ── */
+.export-bar {
+    background: none;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.export-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    background: #fff;
+    border: 1px solid rgba(60, 56, 46, 0.14);
+    border-radius: 999px;
+    box-shadow: 0 1px 2px rgba(60, 56, 46, 0.06), 0 6px 20px rgba(60, 56, 46, 0.1);
+}
+
+.export-pill-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(60, 56, 46, 0.12);
+}
+
+.export-seg {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 12px 0 14px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--ui-font);
+    font-size: 13px;
+    font-weight: 550;
+    letter-spacing: 0.1px;
+    cursor: pointer;
+    transition: background 0.15s var(--ease-smooth), color 0.15s var(--ease-smooth), transform 0.1s var(--ease-smooth);
+}
+
+.export-seg svg { flex-shrink: 0; }
+.export-seg .export-chevron { color: var(--text-tertiary); margin-left: -1px; transition: transform 0.2s var(--ease-smooth); }
+.export-seg:hover { background: rgba(60, 56, 46, 0.07); }
+.export-seg:active { background: rgba(60, 56, 46, 0.12); }
+.export-seg:focus-visible { outline: 2px solid rgba(60, 56, 46, 0.35); outline-offset: 1px; }
+
+/* right segment: soft grey filled pill, like the highlighted toggle in the reference */
+.export-seg-alt { background: rgba(60, 56, 46, 0.075); }
+.export-seg-alt:hover { background: rgba(60, 56, 46, 0.13); }
+.export-seg-alt:active { background: rgba(60, 56, 46, 0.18); }
+
+.export-seg.is-open { background: rgba(60, 56, 46, 0.14); }
+.export-seg.is-open .export-chevron { transform: rotate(180deg); color: var(--text-primary); }
+
+/* ── Column sketch ── */
+.col-sketch { display: flex; flex-direction: column; gap: 0; }
+
+.col-sketch-frame {
+    position: relative;
+    height: 150px;
+    background: #fff;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    direction: ltr;
+}
+
+.col-sketch-lines {
+    position: absolute;
+    inset: 14px 0;
+    width: 100%;
+    height: calc(100% - 28px);
+    pointer-events: none;
+    opacity: 0.65;
+}
+
+.col-sketch-col {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    padding: 0;
+    border: none;
+    border-right: 1px dashed rgba(60, 56, 46, 0.16);
+    background: transparent;
+    cursor: pointer;
+    font-family: var(--ui-font);
+    color: var(--text-tertiary);
+    overflow: hidden;
+    transition: box-shadow 0.15s var(--ease-smooth);
+}
+
+.col-sketch-col:last-of-type { border-right: none; }
+
+/* tinted background (colour + opacity of that column) */
+.col-sketch-col::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--col-bg, transparent);
+    opacity: var(--col-bg-opacity, 0);
+    pointer-events: none;
+}
+
+.col-sketch-col::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(60, 56, 46, 0);
+    transition: background 0.15s var(--ease-smooth);
+    pointer-events: none;
+}
+
+.col-sketch-col:hover::after { background: rgba(60, 56, 46, 0.06); }
+
+.col-sketch-col.selected {
+    box-shadow: inset 0 0 0 2px var(--text-primary);
+}
+
+.col-sketch-col.selected::after { background: rgba(60, 56, 46, 0.05); }
+
+.col-sketch-num {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.col-sketch-title {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    z-index: 1;
+    font-size: 9.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: 1px 2px;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+
+.col-sketch-title.above { top: 3px; }
+.col-sketch-title.below { bottom: 3px; }
+.col-sketch-title.align-left { text-align: left; }
+.col-sketch-title.align-center { text-align: center; }
+.col-sketch-title.align-right { text-align: right; }
+
+.col-sketch-hint { margin: 10px 2px 0; text-align: center; }
+
+/* menu that pops out below the chosen column */
+.col-editor {
+    position: relative;
+    margin-top: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    animation: subIn 0.22s var(--ease-out);
+}
+
+.col-editor::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: var(--caret-x, 50%);
+    width: 10px;
+    height: 10px;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-default);
+    border-left: 1px solid var(--border-default);
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.col-editor-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.col-editor-title {
+    font-family: var(--ui-display-font);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.col-editor-header .coords { flex: 1; }
+.col-editor .rich-text-editor { min-height: 38px; }

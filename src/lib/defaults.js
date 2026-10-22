@@ -137,7 +137,7 @@ export function makeDefaultState() {
 export function defaultExportSettings() {
     return {
         invertText: false,   // mirror text boxes (preview + SVG)
-        svg: { noMargins: false, bgEnabled: false, bgColor: '#ffffff' },
-        png: { scale: 2, noMargins: false, bgEnabled: false, bgColor: '#ffffff' }
+        svg: { bgEnabled: false, bgColor: '#ffffff' },
+        png: { scale: 2, bgEnabled: false, bgColor: '#ffffff' }
     };
 }

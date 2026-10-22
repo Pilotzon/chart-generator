@@ -37,6 +37,10 @@ const plainRun = text => ({ text, bold: false, italic: false, underline: false, 
 
 // Flip a text box: every line is mirrored character-by-character ("hello" -> "olleh"),
 // per-character formatting (bold / italic / underline / color) travels with its character.
+// Paired punctuation is swapped while mirroring, so "(abc)" becomes "(cba)" and not ")cba(".
+const MIRROR_PAIRS = { '(': ')', ')': '(', '[': ']', ']': '[', '{': '}', '}': '{', '<': '>', '>': '<', '«': '»', '»': '«', '‹': '›', '›': '‹' };
+const mirrorChar = ch => MIRROR_PAIRS[ch] || ch;
+
 export function invertRuns(runs) {
     if (!runs || !runs.length) return [];
     const lines = [[]];
@@ -49,7 +53,8 @@ export function invertRuns(runs) {
     const out = [];
     lines.forEach((line, i) => {
         if (i > 0) out.push(plainRun('\n'));
-        [...line].reverse().forEach(c => {
+        [...line].reverse().forEach(raw => {
+            const c = { ...raw, ch: mirrorChar(raw.ch) };
             const last = out[out.length - 1];
             if (last && last.text !== '\n' && last.bold === c.bold && last.italic === c.italic
                 && last.underline === c.underline && last.color === c.color) {

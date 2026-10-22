@@ -72,11 +72,11 @@ function buildSvgArrowHead(x, y, angle, size, style, color) {
 
 /**
  * Builds the vector export.
- * opts: { mode, invertText, crop: {x,y,w,h} | null, background: string | null }
+ * opts: { mode, invertText, background: string | null }
  * The SVG is transparent unless `background` is provided.
  */
 export function buildVectorSVG(state, opts = {}) {
-    const { mode, invertText = false, crop = null, background = null } = opts;
+    const { mode, invertText = false, background = null } = opts;
     const advanced = mode === 'advanced';
     const { width: W, height: H } = getCanvasSize(state);
     const mctx = getMeasureCtx();
@@ -89,7 +89,7 @@ export function buildVectorSVG(state, opts = {}) {
     const subtitleFontPx = parseInt(state.subtitleFontSize) || 16;
     const gridW = parseFloat(state.gridLineWidth);
 
-    const vb = crop || { x: 0, y: 0, w: W, h: H };
+    const vb = { x: 0, y: 0, w: W, h: H };
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${vb.w}" height="${vb.h}" viewBox="${vb.x} ${vb.y} ${vb.w} ${vb.h}">\n`;
     if (background) svg += `<rect x="${vb.x}" y="${vb.y}" width="${vb.w}" height="${vb.h}" fill="${escXml(background)}"/>\n`;
 

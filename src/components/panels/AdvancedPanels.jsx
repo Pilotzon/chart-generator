@@ -8,14 +8,14 @@ import {
 import {
     AxisArrowsBlock, BordersBlock, CanvasSizeBlock, GridStyleBlock, GridToggles, ScaleBlock
 } from '../blocks/AxesBlocks.jsx';
-import { ColumnDefaultsBlock, ColumnListBlock } from '../blocks/ColumnsBlocks.jsx';
+import { ColumnDefaultsBlock, ColumnSketchBlock } from '../blocks/ColumnsBlocks.jsx';
 
 /**
  * Advanced mode: the settings are split over four rail tabs, each with at most three groups.
  *   Chart   – data, line/markers/arrows/shadow, name label + legend
  *   Text    – title/subtitle, axis labels + tick text
  *   Axes    – scale, grid & ticks, frame & arrows, canvas size
- *   Columns – column title defaults + one card per column
+ *   Columns – shared title font + a clickable column sketch
  */
 export function ChartPanel() {
     return (
@@ -78,8 +78,8 @@ export function AxesPanel() {
 export function ColumnsPanel() {
     return (
         <>
-            <Group title="Column titles"><ColumnDefaultsBlock /></Group>
-            <Group title="Columns"><ColumnListBlock /></Group>
+            <Group title="Title font"><ColumnDefaultsBlock /></Group>
+            <Group title="Columns"><ColumnSketchBlock /></Group>
         </>
     );
 }

@@ -1634,7 +1634,9 @@ input[type="color"]::-webkit-color-swatch {
 input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
-    width: 130px;
+    /* same footprint as .custom-dropdown / .number-stepper */
+    width: 100%;
+    max-width: 160px;
     height: 4px;
     border-radius: 3px;
     background: rgba(60, 56, 46, 0.13);

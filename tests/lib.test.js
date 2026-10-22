@@ -55,11 +55,16 @@ describe('svg export', () => {
         expect(inverted).toContain('גבא');
     });
 
-    it('crops the viewBox when a crop is given and paints a background when requested', () => {
-        const svg = buildVectorSVG(makeDefaultState(), {
-            mode: 'classic', crop: { x: 10, y: 20, w: 300, h: 200 }, background: '#123456'
-        });
-        expect(svg).toContain('viewBox="10 20 300 200"');
+    it('paints a background when requested', () => {
+        const svg = buildVectorSVG(makeDefaultState(), { mode: 'classic', background: '#123456' });
         expect(svg).toContain('#123456');
+    });
+
+    it('mirrors paired punctuation together with the text', () => {
+        const svg = buildVectorSVG(
+            Object.assign(makeDefaultState(), { titleRuns: textToRuns('(abc) [x]') }),
+            { mode: 'classic', invertText: true }
+        );
+        expect(svg).toContain('[x] (cba)');
     });
 });

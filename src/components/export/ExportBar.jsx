@@ -53,10 +53,11 @@ export function ExportBar() {
 
     return (
         <div className="export-bar">
+          <div className="export-pill">
             <div className="export-menu" ref={svgRef}>
                 <button
                     type="button"
-                    className={`btn btn-secondary ${open === 'svg' ? 'is-open' : ''}`}
+                    className={`export-seg ${open === 'svg' ? 'is-open' : ''}`}
                     aria-haspopup="dialog"
                     aria-expanded={open === 'svg'}
                     onClick={() => setOpen(open === 'svg' ? null : 'svg')}
@@ -76,12 +77,6 @@ export function ExportBar() {
                         {advanced && (
                             <>
                                 <CheckRow
-                                    label="No margins"
-                                    title="Crop the frame tightly around the chart content"
-                                    checked={settings.svg.noMargins}
-                                    onChange={v => setFormat('svg', { noMargins: v })}
-                                />
-                                <CheckRow
                                     label="Background"
                                     checked={settings.svg.bgEnabled}
                                     onChange={v => setFormat('svg', { bgEnabled: v })}
@@ -100,12 +95,13 @@ export function ExportBar() {
                 )}
             </div>
 
+            <span className="export-pill-divider" aria-hidden="true" />
             <div className="export-menu" ref={pngRef}>
                 {advanced ? (
                     <>
                         <button
                             type="button"
-                            className={`btn btn-primary ${open === 'png' ? 'is-open' : ''}`}
+                            className={`export-seg export-seg-alt ${open === 'png' ? 'is-open' : ''}`}
                             aria-haspopup="dialog"
                             aria-expanded={open === 'png'}
                             onClick={() => setOpen(open === 'png' ? null : 'png')}
@@ -125,14 +121,8 @@ export function ExportBar() {
                                     />
                                 </div>
                                 <div className="export-popover-hint">
-                                    {settings.png.noMargins ? 'Up to ' : ''}{dims}
+                                    {dims}
                                 </div>
-                                <CheckRow
-                                    label="No margins"
-                                    title="Crop the image tightly around the chart content"
-                                    checked={settings.png.noMargins}
-                                    onChange={v => setFormat('png', { noMargins: v })}
-                                />
                                 <CheckRow
                                     label="Background"
                                     checked={settings.png.bgEnabled}
@@ -150,12 +140,13 @@ export function ExportBar() {
                         )}
                     </>
                 ) : (
-                    <button type="button" className="btn btn-primary" onClick={doPNG}>
+                    <button type="button" className="export-seg export-seg-alt" onClick={doPNG}>
                         <IconDownload width={15} height={15} />
-                        Export PNG
+                        PNG
                     </button>
                 )}
             </div>
+          </div>
         </div>
     );
 }

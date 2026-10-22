@@ -57,14 +57,14 @@ describe('classic mode', () => {
         expect(q('#graphCanvas').width).toBe(850);
         expect(q('.rail-btn')).toBeNull();
         // classic PNG button exports directly
-        await click(byText('.export-bar .btn', 'Export PNG'));
+        await click(byText('.export-seg', 'PNG'));
         expect(downloads.map(d => d.name)).toEqual(['graph-studio-export.png']);
     });
 
     it('SVG popup has the invert checkbox above the download button and inverts the preview', async () => {
         await render();
         const before = textCalls().join('|');
-        await click(byText('.export-bar .btn', 'SVG'));
+        await click(byText('.export-seg', 'SVG'));
         const pop = q('.export-popover');
         expect(pop).not.toBeNull();
         const checkbox = q('input[type=checkbox]', pop);
@@ -87,30 +87,45 @@ describe('classic mode', () => {
 
     it('closes the popup with Escape and on outside click', async () => {
         await render();
-        await click(byText('.export-bar .btn', 'SVG'));
+        await click(byText('.export-seg', 'SVG'));
         await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
         expect(q('.export-popover')).toBeNull();
-        await click(byText('.export-bar .btn', 'SVG'));
+        await click(byText('.export-seg', 'SVG'));
         await mouse(document.body, 'mousedown');
         expect(q('.export-popover')).toBeNull();
     });
 
-    it('edits column titles and backgrounds', async () => {
+    it('edits a column through the sketch: title, placement, alignment, background', async () => {
         await render();
         await click(byText('.group-title-text', 'Column Titles'));
-        const cards = qa('.column-card');
-        expect(cards).toHaveLength(7); // xMin 0 … xMax 70, step 10
-        await typeInto(q('.rich-text-editor', cards[1]), '<b>Second</b>');
+        const cols = qa('.col-sketch-col');
+        expect(cols).toHaveLength(7); // xMin 0 … xMax 70, step 10
+        expect(q('.col-editor')).toBeNull();
+        await click(cols[1]);
+        const editor = q('.col-editor');
+        expect(editor).not.toBeNull();
+        expect(editor.textContent).toContain('Column 2');
+        // no "Default" entries any more
+        expect(editor.textContent).not.toContain('Default');
+        await typeInto(q('.rich-text-editor', editor), '<b>Second</b>');
         expect(textCalls()).toContain('Second');
-        const saved = stored('GRAPH_STUDIO_PRO_V13_CLASSIC');
-        expect(saved.columns[1].runs[0]).toMatchObject({ text: 'Second', bold: true });
-        // background toggle reveals colour + opacity
-        const toggle = qa('.control-row', cards[2]).find(r => r.textContent.includes('Background')).querySelector('input');
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').columns[1].runs[0]).toMatchObject({ text: 'Second', bold: true });
+        // placement dropdown → below
+        const placementTrigger = qa('.control-row', editor).find(r => r.textContent.includes('Placement')).querySelector('.dropdown-trigger');
+        await click(placementTrigger);
+        await click(byText('.portal-dropdown-menu .dropdown-item', 'Below grid'));
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').columns[1].placement).toBe('below');
+        expect(q('.col-sketch-title.below')).not.toBeNull();
+        // background
+        const toggle = qa('.control-row', editor).find(r => r.textContent.includes('Background')).querySelector('input');
         await click(toggle);
-        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').columns[2].bgEnabled).toBe(true);
-        expect(qa('input[type=range]', cards[2])).toHaveLength(1);
-        const ctx = q('#graphCanvas').getContext('2d');
-        expect(ctx.calls.some(c => c[0] === 'fillRect')).toBe(true);
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').columns[1].bgEnabled).toBe(true);
+        expect(qa('input[type=range]', q('.col-editor'))).toHaveLength(1);
+        // selecting another column moves the menu
+        await click(qa('.col-sketch-col')[4]);
+        expect(q('.col-editor').textContent).toContain('Column 5');
+        await click(qa('.col-sketch-col')[4]);
+        expect(q('.col-editor')).toBeNull();
     });
 });
 
@@ -132,7 +147,7 @@ describe('advanced mode', () => {
         await click(q('.rail-btn[data-panel="axes"]'));
         expect(qa('.group-title-text').map(n => n.textContent)).toEqual(['Scale', 'Grid & ticks', 'Frame & arrows', 'Canvas size']);
         await click(q('.rail-btn[data-panel="columns"]'));
-        expect(qa('.group-title-text').map(n => n.textContent)).toEqual(['Column titles', 'Columns']);
+        expect(qa('.group-title-text').map(n => n.textContent)).toEqual(['Title font', 'Columns']);
     });
 
     it('shows rail tooltips in a body-level portal', async () => {
@@ -151,20 +166,18 @@ describe('advanced mode', () => {
     it('SVG popup has extra options; PNG popup has resolution/no-margins/background', async () => {
         await render();
         await goAdvanced();
-        await click(byText('.export-bar .btn', 'SVG'));
+        await click(byText('.export-seg', 'SVG'));
         let pop = q('.export-popover');
-        expect(qa('input[type=checkbox]', pop).length).toBe(3);
-        expect(qa('.export-option span', pop).map(n => n.textContent)).toEqual(['Invert text boxes', 'No margins', 'Background']);
+        expect(qa('.export-option span', pop).map(n => n.textContent)).toEqual(['Invert text boxes', 'Background']);
+        expect(pop.textContent).not.toContain('No margins');
         await click(qa('input[type=checkbox]', pop)[1]);
-        await click(qa('input[type=checkbox]', pop)[2]);
         expect(q('input[type=color]', pop)).not.toBeNull();
         await click(byText('.btn', 'Download SVG', pop));
         expect(downloads.at(-1).name).toBe('graph-studio-vector.svg');
         const svg = await blobs.at(-1).text();
-        expect(svg).toMatch(/viewBox="[^"]+"/);
-        expect(svg).toContain('<rect'); // background
+                expect(svg).toContain('<rect'); // background
 
-        await click(byText('.export-bar .btn', 'PNG'));
+        await click(byText('.export-seg', 'PNG'));
         pop = q('.export-popover');
         expect(pop.textContent).toContain('Resolution');
         expect(pop.textContent).toContain('1700 × 1360 px');

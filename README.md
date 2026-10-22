@@ -44,10 +44,10 @@ tests/                      vitest suites
 
 * **Advanced mode** groups settings into four rail tabs: *Chart*, *Text*, *Axes & canvas*, *Columns*.
   The chart switcher is a fixed header above the scrolling area of the Chart tab.
-* **Column titles** (both modes): one column per major X step, each with a rich-text title
-  (bold / italic / underline / colour), alignment (left / center / right), placement (above / below the grid)
-  and an optional background colour with opacity.
+* **Column titles** (both modes): one column per major X step. Font and size are shared; click a column in the
+  little chart sketch and a menu opens below it with a rich-text title (bold / italic / underline / colour),
+  alignment (left / center / right), placement (above / below the grid) and an optional background colour with opacity.
 * **Export**: the SVG button opens a popup with *Invert text boxes* (also applied to the preview) above
-  *Download SVG*. In Advanced mode the SVG and PNG popups also offer *No margins* (crop to content),
-  an optional *Background* colour and, for PNG, the resolution (1–4×). Shortcuts: Ctrl/Cmd+S → PNG, Ctrl/Cmd+E → SVG.
+  *Download SVG*. In Advanced mode the SVG and PNG popups also offer an optional *Background* colour and, for PNG,
+  the resolution (1–4×). Mirrored text also swaps paired punctuation, e.g. `(abc)` → `(cba)`. Shortcuts: Ctrl/Cmd+S → PNG, Ctrl/Cmd+E → SVG.
 * Classic and Advanced workspaces are stored separately in `localStorage`.
