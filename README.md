@@ -25,7 +25,7 @@ src/
     layout                  paddings, plot rect, column titles, coordinate mapping
     scene                   draws the chart on any 2D context (preview, PNG, bbox scan)
     svg                     vector export
-    export                  PNG / SVG download, "no margins" bounding box
+    export                  PNG / SVG download
   components/
     layout/                 Sidebar, SidebarHeader, Rail (tab icons + portal tooltips), ChartSelector
     panels/                 ClassicPanel, AdvancedPanels (Chart / Text / Axes / Columns tabs)
@@ -47,7 +47,17 @@ tests/                      vitest suites
 * **Column titles** (both modes): one column per major X step. Font and size are shared; click a column in the
   little chart sketch and a menu opens below it with a rich-text title (bold / italic / underline / colour),
   alignment (left / center / right), placement (above / below the grid) and an optional background colour with opacity.
-* **Export**: the SVG button opens a popup with *Flip text for MS Word macOS* (also applied to the preview) above
-  *Download SVG*. In Advanced mode the SVG and PNG popups also offer an optional *Background* colour and, for PNG,
-  the resolution (1–4×). Mirrored text also swaps paired punctuation, e.g. `(abc)` → `(cba)`. Shortcuts: Ctrl/Cmd+S → PNG, Ctrl/Cmd+E → SVG.
+* **Sketch pickers** (clickable mini charts, `components/controls/Sketches.jsx`): column titles (solid separators,
+  number at the bottom, the selected column's ring follows the frame's rounded corners), border lines and axis-arrow
+  sides (click the edges of a frame), legend position (four corner chips), title position (left / center / right)
+  and, in Advanced mode, marked points (click a dot to open its card below with a caret).
+* **Export**: the SVG button is one bordered rounded rectangle with a wide label zone and a small chevron zone (each
+  highlights on its own hover); both open the SVG popup with *Flip text for MS Word macOS* above *Download SVG*.
+  PNG is a primary button (classic: direct download; advanced: popup with resolution / background).
+  Shortcuts: Ctrl/Cmd+S → PNG, Ctrl/Cmd+E → SVG.
+* **Flip text for MS Word macOS**: Word on macOS draws SVG text left-to-right without bidi, so Hebrew / Arabic comes out
+  mirrored. With the option on, every text line that contains Hebrew / Arabic letters is stored in *visual* order:
+  the Hebrew / Arabic stretches are reversed (brackets mirrored, niqqud / harakat kept on their letter) while Latin
+  words and numbers stay intact and only change position, e.g. `שלום big light` → `big light םולש`. Lines without
+  Hebrew / Arabic are untouched, the conversion is its own inverse, and PNG is never flipped.
 * Classic and Advanced workspaces are stored separately in `localStorage`.

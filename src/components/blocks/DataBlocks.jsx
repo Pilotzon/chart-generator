@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
 import { useSettings } from '../../hooks/useSettings.js';
 import { detectDirection } from '../../lib/richText.js';
@@ -6,6 +7,7 @@ import { defaultMarkMeta, detectLabelOverlap, formatDec, markKeyFor } from '../.
 import {
     ColorRow, Divider, DropdownRow, FontRow, NumberInput, RangeRow, Reveal, StepperRow, ToggleRow
 } from '../controls/Inputs.jsx';
+import { ChartLines, clamp01 } from '../controls/Sketches.jsx';
 import { IconTrash } from '../controls/Icons.jsx';
 import { SvgIcon } from '../controls/SvgIcon.jsx';
 
@@ -67,7 +69,7 @@ export function PointsTable({ showMark }) {
     );
 }
 
-function MarkedPointCard({ chart, index }) {
+function MarkedPointCard({ chart, index, caret }) {
     const { actions } = useSettings();
     const pt = chart.points[index];
     const key = markKeyFor(chart, index);
@@ -75,7 +77,7 @@ function MarkedPointCard({ chart, index }) {
     const patch = (partial) => actions.patchMarkMeta(chart.id, key, partial);
     const overlap = detectLabelOverlap(chart, index);
     return (
-        <div className="marked-point-card">
+        <div className="marked-point-card" style={caret == null ? undefined : { '--caret-x': `${caret}%` }}>
             <div className="marked-point-header">
                 <span className="marker-swatch" style={{ background: meta.fillColor }} />
                 <span dir="auto">{chart.name}</span>
@@ -108,27 +110,61 @@ function MarkedPointCard({ chart, index }) {
     );
 }
 
+/** Little chart with a clickable dot per marked point; the chosen point's card opens below with a caret. */
 export function MarkedPointsBlock() {
     const { state, set } = useSettings();
-    const cards = [];
+    const [selected, setSelected] = useState(null);
+    const marks = [];
     state.charts.forEach(chart => {
         chart.points.forEach((pt, i) => {
-            if (pt.marked) cards.push(<MarkedPointCard key={`${chart.id}:${i}`} chart={chart} index={i} />);
+            if (pt.marked) marks.push({ chart, index: i, id: `${chart.id}:${i}`, pt });
         });
     });
+    const active = marks.find(m => m.id === selected) || marks[0] || null;
+    const span = state.xMax - state.xMin || 1;
+    const ySpan = state.yMax - state.yMin || 1;
+    const posOf = (pt) => ({
+        x: clamp01((pt.x - state.xMin) / span) * 100,
+        y: (1 - clamp01((pt.y - state.yMin) / ySpan)) * 100
+    });
+
     return (
         <>
-            <p className="hint-text">Mark a point using the checkbox in the data table, then customize it below.</p>
-            {cards.length > 0 && (
+            <p className="hint-text">Mark a point using the checkbox in the data table, then click its dot below to customize it.</p>
+            {marks.length > 0 && (
                 <div className="marked-shared-options">
                     <FontRow label="Label Font" value={state.markedFont} onChange={v => set('markedFont', v)} />
                     <StepperRow label="Label Size" min={8} max={30} value={state.markedFontSize} onChange={v => set('markedFontSize', v)} />
                     <Divider />
                 </div>
             )}
-            <div>
-                {cards.length ? cards : <p className="hint-text" style={{ marginTop: 0 }}>No marked points yet.</p>}
-            </div>
+            {marks.length > 0 && (
+                <div className="sketch-frame mark-sketch">
+                    <ChartLines state={state} />
+                    {marks.map(m => {
+                        const meta = { ...defaultMarkMeta(m.chart), ...((m.chart.markedPointsMeta || {})[markKeyFor(m.chart, m.index)] || {}) };
+                        const pos = posOf(m.pt);
+                        return (
+                            <button
+                                key={m.id}
+                                type="button"
+                                className={`mark-sketch-dot ${active && active.id === m.id ? 'is-on' : ''}`}
+                                title={`${m.chart.name} (${m.pt.x}, ${m.pt.y})`}
+                                style={{
+                                    left: `${pos.x}%`,
+                                    top: `calc(14px + (100% - 28px) * ${pos.y / 100})`,
+                                    background: meta.fillColor,
+                                    borderColor: meta.outlineColor
+                                }}
+                                onClick={() => setSelected(m.id)}
+                            />
+                        );
+                    })}
+                </div>
+            )}
+            {active
+                ? <MarkedPointCard key={active.id} chart={active.chart} index={active.index} caret={posOf(active.pt).x} />
+                : <p className="hint-text" style={{ marginTop: 0 }}>No marked points yet.</p>}
         </>
     );
 }

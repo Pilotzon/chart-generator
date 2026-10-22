@@ -3,13 +3,13 @@ import { useSettings } from '../../hooks/useSettings.js';
 import { getColumnConfig, getColumns } from '../../lib/layout.js';
 import { COLUMN_ALIGN_OPTIONS, COLUMN_PLACEMENT_OPTIONS } from '../../lib/options.js';
 import { runsToPlainText } from '../../lib/richText.js';
+import { ChartLines, clamp01 } from '../controls/Sketches.jsx';
 import { RichTextEditor } from '../richtext/RichTextEditor.jsx';
 import {
     ColorRow, Divider, DropdownRow, FontRow, RangeRow, Reveal, StepperRow, ToggleRow
 } from '../controls/Inputs.jsx';
 
 const fmt = (n) => String(+Number(n).toFixed(2));
-const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
 /** Font + size are shared by every column title; alignment and placement are per column. */
 export function ColumnDefaultsBlock() {
@@ -73,42 +73,22 @@ export function ColumnSketchBlock() {
     }
 
     const span = state.xMax - state.xMin;
-    const ySpan = state.yMax - state.yMin || 1;
     const showNumbers = columns.length <= 16;
     const active = columns.find(c => c.index === selected) || null;
     const caret = active ? ((active.from + active.to) / 2 - state.xMin) / span * 100 : 50;
 
     return (
         <div className="col-sketch">
-            <div className="col-sketch-frame">
-                <svg className="col-sketch-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                    {state.charts.map(chart => {
-                        const pts = [...chart.points].sort((a, b) => a.x - b.x).map(p => {
-                            const x = clamp01((p.x - state.xMin) / span) * 100;
-                            const y = (1 - clamp01((p.y - state.yMin) / ySpan)) * 100;
-                            return `${x.toFixed(2)},${y.toFixed(2)}`;
-                        });
-                        return (
-                            <polyline
-                                key={chart.id}
-                                points={pts.join(' ')}
-                                fill="none"
-                                stroke={chart.color}
-                                strokeWidth="2"
-                                strokeLinejoin="round"
-                                vectorEffect="non-scaling-stroke"
-                            />
-                        );
-                    })}
-                </svg>
-                {columns.map(col => {
+            <div className="sketch-frame col-sketch-frame">
+                <ChartLines state={state} />
+                {columns.map((col, i) => {
                     const cfg = getColumnConfig(state, col.index);
                     const title = runsToPlainText(cfg.runs || []).trim();
                     return (
                         <button
                             key={col.index}
                             type="button"
-                            className={`col-sketch-col ${selected === col.index ? 'selected' : ''}`}
+                            className={`col-sketch-col ${i === 0 ? 'is-first' : ''} ${i === columns.length - 1 ? 'is-last' : ''} ${selected === col.index ? 'selected' : ''}`}
                             title={`Column ${col.index + 1} (${fmt(col.from)} – ${fmt(col.to)})`}
                             style={{
                                 left: `${(col.from - state.xMin) / span * 100}%`,

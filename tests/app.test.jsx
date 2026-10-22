@@ -142,6 +142,41 @@ describe('classic mode', () => {
         await click(qa('.col-sketch-col')[4]);
         expect(q('.col-editor')).toBeNull();
     });
+
+    it('column sketch: solid separators, rounded side corners flags, number kept in the column', async () => {
+        await render();
+        await click(byText('.group-title-text', 'Column Titles'));
+        const cols = qa('.col-sketch-col');
+        expect(cols[0].classList.contains('is-first')).toBe(true);
+        expect(cols[0].classList.contains('is-last')).toBe(false);
+        expect(cols.at(-1).classList.contains('is-last')).toBe(true);
+        expect(cols[3].classList.contains('is-first') || cols[3].classList.contains('is-last')).toBe(false);
+        expect(cols[0].querySelector('.col-sketch-num').textContent).toBe('1');
+    });
+
+    it('border lines: click the edges of the frame sketch', async () => {
+        await render();
+        await click(byText('.group-title-text', 'Axes & Grid'));
+        const edges = qa('.edge-sketch-edge');
+        expect(edges.map(e => e.className.match(/edge-(top|right|bottom|left)/)[1])).toEqual(['top', 'right', 'bottom', 'left']);
+        const top = edges[0];
+        const before = top.getAttribute('aria-pressed') === 'true';
+        await click(top);
+        expect(top.getAttribute('aria-pressed')).toBe(String(!before));
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').borderTop).toBe(!before);
+        expect(q('.border-toggle')).toBeNull();
+    });
+
+    it('title position: pick left / right / center in the frame sketch', async () => {
+        await render();
+        await click(byText('.group-title-text', 'Titles & Labels'));
+        const chips = qa('.pos-sketch-title .pos-chip');
+        expect(chips).toHaveLength(3);
+        await click(chips[1]);
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').titlePosition).toBe(chips[1].title === 'Left' ? 'top-left' : 'top-right');
+        expect(chips[1].getAttribute('aria-checked')).toBe('true');
+        expect(chips.filter(c => c.getAttribute('aria-checked') === 'true')).toHaveLength(1);
+    });
 });
 
 describe('advanced mode', () => {
@@ -231,6 +266,7 @@ describe('advanced mode', () => {
             input.dispatchEvent(new Event('input', { bubbles: true }));
         });
         expect(textCalls()).toContain('hello');
+        expect(qa('.mark-sketch-dot')).toHaveLength(1);
         // edit the X of that point
         const xInput = qa('.points-table tbody tr')[1].querySelector('input[type=number]');
         await act(async () => {
@@ -244,6 +280,40 @@ describe('advanced mode', () => {
         const meta = chart.markedPointsMeta['25_67'];
         expect(meta && meta.label).toBe('hello');
         expect(chart.points.map(p => p.x)).toEqual([0, 25, 40, 60]);
+    });
+});
+
+describe('advanced sketches', () => {
+    it('marked points: click a dot to open its card below the sketch', async () => {
+        await render();
+        await goAdvanced();
+        const boxes = qa('.mark-checkbox');
+        await click(boxes[1]);
+        await click(boxes[2]);
+        const dots = qa('.mark-sketch-dot');
+        expect(dots).toHaveLength(2);
+        expect(qa('.marked-point-card')).toHaveLength(1);
+        const first = q('.marked-point-card .coords').textContent;
+        await click(dots[1]);
+        expect(dots[1].classList.contains('is-on')).toBe(true);
+        expect(q('.marked-point-card .coords').textContent).not.toBe(first);
+        expect(q('.marked-point-card').style.getPropertyValue('--caret-x')).not.toBe('');
+    });
+
+    it('legend position: corner chips in a frame sketch', async () => {
+        await render();
+        await goAdvanced();
+        await click(byText('.group-title-text', 'Name label & legend'));
+        if (qa('.pos-sketch-legend .pos-chip').length === 0) {
+            const toggle = qa('.control-row').find(r => r.textContent.includes('Show Legend')).querySelector('input');
+            await click(toggle);
+        }
+        const corners = qa('.pos-sketch-legend .pos-chip');
+        expect(corners).toHaveLength(4);
+        const bl = corners.find(c => c.title === 'Bottom Left');
+        await click(bl);
+        expect(stored('GRAPH_STUDIO_PRO_V13_ADVANCED').legendPosition).toBe('bottom-left');
+        expect(bl.getAttribute('aria-checked')).toBe('true');
     });
 });
 

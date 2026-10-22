@@ -250,7 +250,8 @@
 /* ── Column sketch ── */
 .col-sketch { display: flex; flex-direction: column; gap: 0; }
 
-.col-sketch-frame {
+/* Shared "mini chart" frame used by every sketch picker */
+.sketch-frame {
     position: relative;
     height: 150px;
     background: #fff;
@@ -260,14 +261,16 @@
     direction: ltr;
 }
 
-.col-sketch-lines {
+.sketch-lines {
     position: absolute;
     inset: 14px 0;
     width: 100%;
     height: calc(100% - 28px);
     pointer-events: none;
-    opacity: 0.65;
+    opacity: 0.55;
 }
+
+.col-sketch-frame { height: 150px; }
 
 .col-sketch-col {
     position: absolute;
@@ -275,7 +278,7 @@
     bottom: 0;
     padding: 0;
     border: none;
-    border-right: 1px dashed rgba(60, 56, 46, 0.16);
+    border-right: 1px solid rgba(60, 56, 46, 0.18);
     background: transparent;
     cursor: pointer;
     font-family: var(--ui-font);
@@ -284,7 +287,12 @@
     transition: box-shadow 0.15s var(--ease-smooth);
 }
 
-.col-sketch-col:last-of-type { border-right: none; }
+.col-sketch-col.is-last { border-right: none; }
+
+/* the black selection ring follows the frame's rounded corners (frame radius minus its 1px border) */
+.col-sketch-frame { --sketch-r: calc(var(--radius-sm) - 1px); }
+.col-sketch-col.is-first { border-top-left-radius: var(--sketch-r); border-bottom-left-radius: var(--sketch-r); }
+.col-sketch-col.is-last { border-top-right-radius: var(--sketch-r); border-bottom-right-radius: var(--sketch-r); }
 
 /* tinted background (colour + opacity of that column) */
 .col-sketch-col::before {
@@ -317,10 +325,10 @@
     position: absolute;
     left: 0;
     right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: 5px;
     font-size: 11px;
     font-weight: 600;
+    line-height: 1;
     opacity: 0.5;
     pointer-events: none;
 }
@@ -344,7 +352,7 @@
 }
 
 .col-sketch-title.above { top: 3px; }
-.col-sketch-title.below { bottom: 3px; }
+.col-sketch-title.below { bottom: 21px; }   /* sits above the column number */
 .col-sketch-title.align-left { text-align: left; }
 .col-sketch-title.align-center { text-align: center; }
 .col-sketch-title.align-right { text-align: right; }
@@ -394,3 +402,118 @@
 
 .col-editor-header .coords { flex: 1; }
 .col-editor .rich-text-editor { min-height: 38px; }
+
+
+/* ── Edge picker (border lines / axis arrows) ── */
+.edge-sketch { height: 112px; margin: 4px 0 2px; }
+.edge-sketch .sketch-lines { inset: 28px 28px; width: calc(100% - 56px); height: calc(100% - 56px); }
+
+.edge-sketch-edge {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: var(--ui-font);
+    color: var(--text-quaternary);
+    transition: background 0.15s var(--ease-smooth), color 0.15s var(--ease-smooth);
+}
+
+.edge-sketch-edge:hover { background: rgba(60, 56, 46, 0.06); color: var(--text-secondary); }
+.edge-sketch-edge.is-on { color: var(--text-primary); }
+.edge-sketch-edge:focus-visible { outline: 2px solid rgba(60, 56, 46, 0.4); outline-offset: -3px; }
+
+.edge-sketch-label { font-size: 10px; font-weight: 550; letter-spacing: 0.2px; pointer-events: none; }
+
+.edge-sketch-line {
+    position: absolute;
+    background: rgba(60, 56, 46, 0.14);
+    border-radius: 2px;
+    transition: background 0.15s var(--ease-smooth), transform 0.15s var(--ease-smooth);
+    pointer-events: none;
+}
+
+.edge-sketch-edge.is-on .edge-sketch-line { background: var(--text-primary); }
+
+.edge-top, .edge-bottom { left: 0; right: 0; height: 24px; }
+.edge-left, .edge-right { top: 24px; bottom: 24px; width: 24px; }
+.edge-top { top: 0; } .edge-bottom { bottom: 0; }
+.edge-left { left: 0; } .edge-right { right: 0; }
+.edge-left .edge-sketch-label, .edge-right .edge-sketch-label { writing-mode: vertical-rl; }
+.edge-left .edge-sketch-label { transform: rotate(180deg); }
+
+.edge-top .edge-sketch-line, .edge-bottom .edge-sketch-line { left: 0; right: 0; height: 3px; }
+.edge-left .edge-sketch-line, .edge-right .edge-sketch-line { top: -24px; bottom: -24px; width: 3px; }
+.edge-top .edge-sketch-line { top: 0; } .edge-bottom .edge-sketch-line { bottom: 0; }
+.edge-left .edge-sketch-line { left: 0; } .edge-right .edge-sketch-line { right: 0; }
+.edge-top .edge-sketch-label { margin-top: 4px; } .edge-bottom .edge-sketch-label { margin-bottom: 4px; }
+
+/* ── Position picker (legend corners / title alignment) ── */
+.pos-sketch { height: 104px; margin: 4px 0 2px; }
+.pos-sketch-title { height: 78px; }
+.pos-sketch .sketch-lines { inset: 36px 10px 12px; width: calc(100% - 20px); height: calc(100% - 48px); }
+.pos-sketch-title .sketch-lines { inset: 30px 10px 8px; height: calc(100% - 38px); }
+
+.pos-chip {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 52px;
+    height: 20px;
+    padding: 0 6px;
+    border: 1px solid rgba(60, 56, 46, 0.16);
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    color: rgba(60, 56, 46, 0.28);
+    transition: all 0.15s var(--ease-smooth);
+}
+
+.pos-sketch-title .pos-chip { width: 64px; justify-content: center; }
+.pos-chip:hover { border-color: rgba(60, 56, 46, 0.4); color: rgba(60, 56, 46, 0.6); background: rgba(60, 56, 46, 0.04); }
+.pos-chip.is-on { background: var(--text-primary); border-color: var(--text-primary); color: #fff; }
+.pos-chip:focus-visible { outline: 2px solid rgba(60, 56, 46, 0.4); outline-offset: 2px; }
+.pos-chip-swatch { width: 10px; height: 3px; border-radius: 2px; background: currentColor; flex: none; }
+.pos-chip-bar { flex: 1; height: 4px; border-radius: 2px; background: currentColor; opacity: 0.8; }
+.pos-sketch-title .pos-chip-bar { flex: none; width: 100%; }
+
+.pos-chip.v-top { top: 6px; } .pos-chip.v-bottom { bottom: 6px; }
+.pos-chip.h-left { left: 6px; } .pos-chip.h-right { right: 6px; }
+.pos-chip.h-center { left: 50%; transform: translateX(-50%); }
+
+/* ── Marked points picker ── */
+.mark-sketch { height: 130px; margin-bottom: 0; }
+
+.mark-sketch-dot {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    border: 2px solid #000;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    transition: box-shadow 0.15s var(--ease-smooth), transform 0.15s var(--ease-smooth);
+}
+
+.mark-sketch-dot:hover { transform: translate(-50%, -50%) scale(1.2); }
+.mark-sketch-dot.is-on { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--text-primary); z-index: 1; }
+.mark-sketch-dot:focus-visible { outline: 2px solid rgba(60, 56, 46, 0.5); outline-offset: 3px; }
+
+.mark-sketch + .marked-point-card { position: relative; margin-top: 12px; }
+.mark-sketch + .marked-point-card::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: var(--caret-x, 50%);
+    width: 10px;
+    height: 10px;
+    background: var(--bg-elevated, #fff);
+    border-top: 1px solid var(--border-default);
+    border-left: 1px solid var(--border-default);
+    transform: translateX(-50%) rotate(45deg);
+}

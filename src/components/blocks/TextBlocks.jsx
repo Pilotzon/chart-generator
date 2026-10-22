@@ -4,8 +4,9 @@ import { TITLE_POSITION_OPTIONS, LEGEND_POSITION_OPTIONS } from '../../lib/optio
 import { runsToPlainText, textToRuns } from '../../lib/richText.js';
 import { RichTextEditor } from '../richtext/RichTextEditor.jsx';
 import {
-    ColorRow, Divider, DropdownRow, FontRow, Reveal, StepperRow, ToggleRow
+    ColorRow, Divider, FontRow, Reveal, SectionLabel, StepperRow, ToggleRow
 } from '../controls/Inputs.jsx';
+import { PositionSketch } from '../controls/Sketches.jsx';
 import { IconPlus } from '../controls/Icons.jsx';
 
 /** Label + rich-text box bound to a text key (titleText, xLabel, …). */
@@ -32,12 +33,8 @@ export function TitleBlock() {
     return (
         <>
             <RichField label="Main Title" editorKey="titleText" runs={state.titleRuns} />
-            <DropdownRow
-                label="Position"
-                value={state.titlePosition}
-                options={TITLE_POSITION_OPTIONS.map(o => ({ ...o, icon: o.value }))}
-                onChange={v => set('titlePosition', v)}
-            />
+            <SectionLabel>Position</SectionLabel>
+            <PositionSketch kind="title" options={TITLE_POSITION_OPTIONS} value={state.titlePosition} onChange={v => set('titlePosition', v)} />
             <FontRow value={state.titleFont} onChange={v => set('titleFont', v)} />
             <StepperRow label="Size" min={10} max={40} value={state.titleFontSize} onChange={v => set('titleFontSize', v)} />
         </>
@@ -116,12 +113,8 @@ export function LegendBlock() {
         <>
             <ToggleRow label="Show Legend" checked={state.showLegend} onChange={v => set('showLegend', v)} />
             <Reveal show={state.showLegend}>
-                <DropdownRow
-                    label="Position"
-                    value={state.legendPosition}
-                    options={LEGEND_POSITION_OPTIONS.map(o => ({ ...o, icon: o.value }))}
-                    onChange={v => set('legendPosition', v)}
-                />
+                <SectionLabel>Position</SectionLabel>
+                <PositionSketch kind="legend" options={LEGEND_POSITION_OPTIONS} value={state.legendPosition} onChange={v => set('legendPosition', v)} />
                 <FontRow value={state.legendFont} onChange={v => set('legendFont', v)} />
                 <StepperRow label="Font Size" min={8} max={24} value={state.legendFontSize} onChange={v => set('legendFontSize', v)} />
                 <ColorRow label="Background" value={state.legendBg} onChange={v => set('legendBg', v)} />

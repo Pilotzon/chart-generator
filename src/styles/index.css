@@ -1519,88 +1519,6 @@ textarea:focus {
     color: var(--danger);
 }
 
-/* ─────────────────────────────────────────────
-   Border selector
-   ───────────────────────────────────────────── */
-.border-selector {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 7px;
-    padding: 4px 0 2px;
-}
-
-.border-toggle {
-    position: relative;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.border-toggle input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-    pointer-events: none;
-}
-
-.border-toggle-face {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-default);
-    background: var(--bg-input);
-    color: var(--text-quaternary);
-    transition: all 0.18s var(--ease-smooth);
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 1;
-}
-
-.border-toggle-face svg {
-    width: 24px;
-    height: 20px;
-    flex-shrink: 0;
-    transition: color 0.18s var(--ease-smooth);
-}
-
-.border-toggle-face span {
-    color: var(--text-tertiary);
-    transition: color 0.18s var(--ease-smooth);
-}
-
-.border-toggle:hover .border-toggle-face {
-    border-color: var(--border-strong);
-    background: var(--bg-input-hover);
-    color: var(--text-secondary);
-}
-
-.border-toggle:hover .border-toggle-face span {
-    color: var(--text-secondary);
-}
-
-.border-toggle input:checked+.border-toggle-face {
-    border-color: var(--text-primary);
-    background: rgba(60, 56, 46, 0.06);
-    color: var(--text-primary);
-}
-
-.border-toggle input:checked+.border-toggle-face span {
-    color: var(--text-primary);
-    font-weight: 550;
-}
-
-.border-toggle:hover input:checked+.border-toggle-face {
-    background: rgba(60, 56, 46, 0.09);
-    border-color: var(--text-primary);
-}
-
-.border-toggle:active .border-toggle-face {
-    transform: scale(0.97);
-}
-
 /* ── Color input (round swatch) ── */
 input[type="color"] {
     -webkit-appearance: none;
@@ -2369,21 +2287,6 @@ body.mode-advanced .section-label.advanced-only {
 }
 
 /* Compact border selector (axis arrows) */
-.border-selector-compact {
-    gap: 5px;
-}
-
-.border-selector-compact .border-toggle-face {
-    padding: 8px 10px;
-    font-size: 12.5px;
-    gap: 6px;
-}
-
-.border-selector-compact .border-toggle-face svg {
-    width: 20px;
-    height: 16px;
-}
-
 /* ─────────────────────────────────────────────
    Disabled controls
    ───────────────────────────────────────────── */

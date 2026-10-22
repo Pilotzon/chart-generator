@@ -69,7 +69,7 @@ export function BordersBlock() {
     return (
         <>
             <SectionLabel>Border Lines</SectionLabel>
-            <BorderSelector prefix="border" values={state} onToggle={set} />
+            <BorderSelector prefix="border" values={state} onToggle={set} color={state.borderColor} />
             <ColorRow label="Border Color" value={state.borderColor} onChange={v => set('borderColor', v)} />
             <RangeRow label="Border Width" min={0.5} max={4} step={0.1} value={state.borderWidth} onChange={v => set('borderWidth', v)} />
         </>
@@ -90,7 +90,7 @@ export function AxisArrowsBlock() {
                 />
                 <RangeRow label="Size" min={6} max={30} step={1} value={state.axisArrowSize} onChange={v => set('axisArrowSize', v)} />
                 <SectionLabel>Apply to</SectionLabel>
-                <BorderSelector prefix="arrow" values={state} onToggle={set} compact titleSuffix="arrow" />
+                <BorderSelector prefix="arrow" values={state} onToggle={set} titleSuffix="arrow" />
             </Reveal>
         </>
     );
