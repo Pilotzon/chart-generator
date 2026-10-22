@@ -6,7 +6,7 @@ import { usePlaceholder } from '../../lib/placeholders.js';
 import { LABEL_POSITION_OPTIONS, CHART_LABEL_POSITION_OPTIONS } from '../../lib/options.js';
 import { defaultMarkMeta, detectLabelOverlap, formatDec, markKeyFor } from '../../lib/points.js';
 import {
-    ColorRow, Divider, DropdownRow, FontRow, NumberInput, RangeRow, Reveal, StepperRow, ToggleRow
+    ColorRow, Divider, DropdownRow, FontRow, FontSizeRow, NumberInput, RangeRow, Reveal, StepperRow, ToggleRow
 } from '../controls/Inputs.jsx';
 import { ChartLines, clamp01 } from '../controls/Sketches.jsx';
 import { IconTrash } from '../controls/Icons.jsx';
@@ -156,7 +156,7 @@ export function MarkedPointsBlock() {
             {marks.length > 0 && (
                 <div className="marked-shared-options">
                     <FontRow label="Label Font" disabled={noLabels} value={state.markedFont} onChange={v => set('markedFont', v)} />
-                    <StepperRow label="Label Size" disabled={noLabels} min={8} max={30} value={state.markedFontSize} onChange={v => set('markedFontSize', v)} />
+                    <FontSizeRow label="Label Size" limitKey="markedFontSize" disabled={noLabels} value={state.markedFontSize} onChange={v => set('markedFontSize', v)} />
                     <Divider />
                 </div>
             )}
@@ -209,7 +209,7 @@ export function ChartLabelBlock() {
                     options={CHART_LABEL_POSITION_OPTIONS.map(o => ({ ...o, icon: o.value }))}
                     onChange={v => setChart('chartLabelPosition', v)}
                 />
-                <StepperRow label="Label Size" min={8} max={30} value={chart.chartLabelFontSize} onChange={v => setChart('chartLabelFontSize', v)} />
+                <FontSizeRow label="Label Size" limitKey="chartLabelFontSize" value={chart.chartLabelFontSize} onChange={v => setChart('chartLabelFontSize', v)} />
                 <ToggleRow label="Bold Label" checked={chart.chartLabelBold} onChange={v => setChart('chartLabelBold', v)} />
             </Reveal>
         </>

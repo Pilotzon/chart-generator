@@ -1,4 +1,5 @@
 import { useSettings } from '../../hooks/useSettings.js';
+import { getCanvasSize } from '../../lib/layout.js';
 import { AXIS_ARROW_OPTIONS, GRID_STYLE_OPTIONS } from '../../lib/options.js';
 import { BorderSelector } from '../controls/BorderSelector.jsx';
 import {
@@ -106,6 +107,7 @@ export function AxisArrowsBlock() {
 
 export function CanvasSizeBlock() {
     const { state, set } = useSettings();
+    const size = getCanvasSize(state);
     return (
         <>
             <ToggleRow label="Square (1:1)" checked={state.squareMode} onChange={v => set('squareMode', v)} />
@@ -118,6 +120,12 @@ export function CanvasSizeBlock() {
                     <StepperRow label="Width" step={50} min={300} max={2000} value={state.canvasWidth} onChange={v => set('canvasWidth', v)} />
                     <StepperRow label="Height" step={50} min={300} max={2000} value={state.canvasHeight} onChange={v => set('canvasHeight', v)} />
                 </Reveal>
+            )}
+            {size.expanded && (
+                <p className="hint-text expanded-note">
+                    Large text expanded the frame to <b>{size.width} × {size.height}px</b> (you set {size.baseWidth} × {size.baseHeight}).
+                    The plot keeps its size.
+                </p>
             )}
         </>
     );

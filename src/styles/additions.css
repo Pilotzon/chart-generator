@@ -682,3 +682,16 @@ input[type="checkbox"]:not(.toggle-switch input):disabled { opacity: 0.45; curso
 /* "Mark" checkbox sits a little lower than the number boxes' centre line */
 .points-table td.td-mark .mark-checkbox { position: relative; top: 4px; }
 .points-table th.th-advanced { text-align: center; }
+
+/* ── Font sizes above the recommended maximum (the frame grows) ── */
+.number-stepper.is-over-limit { border-color: rgba(44, 123, 215, 0.55); background: rgba(44, 123, 215, 0.06); }
+.number-stepper.is-over-limit input[type="number"] { color: #2C7BD7; font-weight: 600; }
+.expanded-note {
+    margin: 4px 0 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(44, 123, 215, 0.08);
+    color: var(--text-secondary);
+    animation: subIn 0.25s var(--ease-out);
+}
+.expanded-note b { color: #2C7BD7; font-weight: 600; }

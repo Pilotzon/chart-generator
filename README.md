@@ -88,4 +88,10 @@ tests/                      vitest suites
 * **Pick a point on the graph** and its row is highlighted (and scrolled into view) in the points editor; the Data group
   expands and, in Advanced mode, the Chart tab opens.
 * **Checkboxes** share one style: 6px corners, slate-blue border, blue when checked.
+* **Bigger text than the maximum**: font sizes go up to 200px. Crossing the recommended maximum (title 40, subtitle 30,
+  axis labels 36, tick numbers 30, column titles 40; legend 24, marked-point and chart labels 30) first shows a warning.
+  Confirm and the chart's frame expands instead of squeezing everything in: the extra room the bigger text needs is added
+  around the plot, so the plot, the line, the grid and the other elements keep their size (`getCanvasSize` in
+  `src/lib/layout.js`; the Canvas Size group shows the expanded size). Square mode stays square; PNG / SVG export use the
+  expanded size. Legend, marked-point and chart-label text overlay the plot, so they just grow.
 * Classic and Advanced workspaces are stored separately in `localStorage`.

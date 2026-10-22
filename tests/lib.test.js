@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultColumn, makeDefaultState } from '../src/lib/defaults.js';
-import { getColumns, getColumnConfig, computeLayout, borderSegments } from '../src/lib/layout.js';
+import { getColumns, getColumnConfig, computeLayout, borderSegments, getCanvasSize } from '../src/lib/layout.js';
 import { flipRunsForWord, textToRuns } from '../src/lib/richText.js';
 import { buildVectorSVG } from '../src/lib/svg.js';
 
@@ -280,5 +280,45 @@ describe('frame lines', () => {
         // a side without a neighbour is not extended
         s.borderLeft = false;
         expect(borderSegments(s, l.pad, l.pw, l.ph)[0].x1).toBe(l.pad.left);
+    });
+});
+
+describe('font sizes above the recommended maximum expand the frame', () => {
+    const plain = () => { const s = makeDefaultState(); s.titleRuns = textToRuns('Title'); s.xLabelRuns = textToRuns('X'); s.yLabelRuns = textToRuns('Y'); return s; };
+
+    it('keeps the canvas as set while every size is within its maximum', () => {
+        const s = plain();
+        s.titleFontSize = 40; s.tickFontSize = 30;
+        expect(getCanvasSize(s)).toMatchObject({ width: 850, height: 680, expanded: false });
+    });
+
+    it('grows the frame by the extra room, so the plot area keeps its exact size', () => {
+        const s = plain();
+        s.titleFontSize = 40; s.axisFontSize = 36; s.tickFontSize = 30;
+        const ref = getCanvasSize(s);
+        const refL = computeLayout(s, ref.width, ref.height);
+        s.titleFontSize = 70; s.axisFontSize = 60; s.tickFontSize = 50;
+        const big = getCanvasSize(s);
+        expect(big.expanded).toBe(true);
+        expect(big.width).toBeGreaterThan(850);
+        expect(big.height).toBeGreaterThan(680);
+        expect(big.baseWidth).toBe(850);
+        const l = computeLayout(s, big.width, big.height);
+        expect(Math.abs(l.pw - refL.pw)).toBeLessThan(1.5);   // canvas sizes are whole pixels
+        expect(Math.abs(l.ph - refL.ph)).toBeLessThan(1.5);
+    });
+
+    it('square mode stays square', () => {
+        const s = plain();
+        s.squareMode = true; s.squareSize = 700; s.titleFontSize = 90;
+        const c = getCanvasSize(s);
+        expect(c.width).toBe(c.height);
+        expect(c.width).toBeGreaterThan(700);
+    });
+
+    it('a title that would be cut off widens the frame', () => {
+        const s = plain();
+        s.titleRuns = textToRuns('word '.repeat(30)); s.titleFontSize = 120;
+        expect(getCanvasSize(s).width).toBeGreaterThan(850);
     });
 });

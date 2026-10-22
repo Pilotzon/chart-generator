@@ -565,3 +565,48 @@ describe('empty text locks its options; placeholders; checkboxes; point highligh
         expect(rowOf('Label position').dataset.disabled).toBeUndefined();
     });
 });
+
+describe('font sizes above the maximum', () => {
+    const sizeRow = (label) => qa('.control-row').find(r => r.querySelector('label')?.textContent.trim() === label);
+    const setNumber = async (input, v) => {
+        await act(async () => {
+            const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+            set.call(input, String(v));
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        await act(async () => { input.dispatchEvent(new FocusEvent('focusout', { bubbles: true })); input.blur(); });
+    };
+
+    it('warns before crossing the maximum; cancel keeps the value, confirm expands the frame', async () => {
+        await render();
+        const row = sizeRow('Size');             // title size (max 40)
+        const input = row.querySelector('input');
+        await setNumber(input, 55);
+        expect(q('.modal-card')).not.toBeNull();
+        expect(q('.modal-message').textContent).toMatch(/expand/i);
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').titleFontSize).toBe(20);
+        await click(byText('.modal-actions .btn', 'Cancel'));
+        expect(q('.modal-card')).toBeNull();
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').titleFontSize).toBe(20);
+        expect(sizeRow('Size').querySelector('input').value).toBe('20');
+
+        await setNumber(sizeRow('Size').querySelector('input'), 55);
+        await click(byText('.modal-actions .btn', 'Expand frame & continue'));
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').titleFontSize).toBe(55);
+        expect(q('.number-stepper.is-over-limit')).not.toBeNull();
+        // the canvas grew, the plot did not shrink
+        expect(q('#graphCanvas').height).toBeGreaterThan(680);
+        // further changes above the limit need no new warning
+        await setNumber(sizeRow('Size').querySelector('input'), 60);
+        expect(q('.modal-card')).toBeNull();
+        expect(stored('GRAPH_STUDIO_PRO_V13_CLASSIC').titleFontSize).toBe(60);
+    });
+
+    it('the plus button at the maximum asks first too', async () => {
+        await render();
+        await setNumber(sizeRow('Size').querySelector('input'), 40);
+        expect(q('.modal-card')).toBeNull();
+        await click(sizeRow('Size').querySelectorAll('.stepper-btn')[1]);
+        expect(q('.modal-card')).not.toBeNull();
+    });
+});

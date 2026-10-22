@@ -1,6 +1,9 @@
+import { createPortal } from 'react-dom';
+import { FONT_HARD_MAX, FONT_SIZE_LIMITS } from '../../lib/constants.js';
+import { Modal } from '../modals/Modals.jsx';
 import { SvgIcon } from './SvgIcon.jsx';
 import { useEffect, useRef, useState } from 'react';
-import { IconMinus, IconPlus } from './Icons.jsx';
+import { IconMinus, IconPlus, IconWarning } from './Icons.jsx';
 import { Dropdown } from './Dropdown.jsx';
 import { FontDropdown } from './FontDropdown.jsx';
 
@@ -59,7 +62,7 @@ export function NumberInput({
 }
 
 /** −/+ stepper around a number input. */
-export function NumberStepper({ value, onChange, min, max, step = 1, inputStep, decimals }) {
+export function NumberStepper({ value, onChange, min, max, step = 1, inputStep, decimals, commitOn, className = '' }) {
     const bump = (dir) => {
         const cur = parseFloat(value);
         const base = Number.isNaN(cur) ? 0 : cur;
@@ -69,9 +72,9 @@ export function NumberStepper({ value, onChange, min, max, step = 1, inputStep, 
         onChange(next);
     };
     return (
-        <div className="number-stepper">
+        <div className={`number-stepper ${className}`}>
             <button type="button" className="stepper-btn" tabIndex={-1} onClick={() => bump(-1)}><IconMinus /></button>
-            <NumberInput value={value} onCommit={onChange} min={min} max={max} step={inputStep ?? step} />
+            <NumberInput value={value} onCommit={onChange} min={min} max={max} step={inputStep ?? step} commitOn={commitOn} />
             <button type="button" className="stepper-btn" tabIndex={-1} onClick={() => bump(1)}><IconPlus /></button>
         </div>
     );
@@ -114,6 +117,48 @@ export function Row({ label, children, className = '', disabled = false, hint })
             {label !== undefined && <label>{label}</label>}
             {children}
         </div>
+    );
+}
+
+/**
+ * Font size row. Up to `limitKey`'s recommended maximum it is a plain stepper; going above it first asks for
+ * confirmation, because the chart's frame will then grow to make room (only the text gets bigger).
+ */
+export function FontSizeRow({ label = 'Size', limitKey, min = 8, value, onChange, disabled, className }) {
+    const { max, expand } = FONT_SIZE_LIMITS[limitKey];
+    const [pending, setPending] = useState(null);
+    const [nonce, setNonce] = useState(0);
+    const over = (parseFloat(value) || 0) > max;
+
+    const request = (n) => {
+        if (n > max && !over) { setPending(n); return; }   // crossing the limit: warn first
+        onChange(Math.min(n, FONT_HARD_MAX));
+    };
+    const cancel = () => { setPending(null); setNonce(k => k + 1); };   // remount → the field shows the old value again
+    const confirm = () => { const n = pending; setPending(null); onChange(Math.min(n, FONT_HARD_MAX)); };
+
+    return (
+        <Row label={label} className={className} disabled={disabled}>
+            <NumberStepper
+                key={nonce}
+                className={over ? 'is-over-limit' : ''}
+                min={min} max={FONT_HARD_MAX} value={value} onChange={request} commitOn="blur"
+            />
+            {pending !== null && createPortal(
+                <Modal
+                    icon={<IconWarning />}
+                    title={`Text above ${max}px`}
+                    message={expand
+                        ? `Sizes above ${max}px won't be squeezed into the current frame. Instead the chart's frame will expand to make room for the bigger text: only the text grows, the plot, the line and everything else keep their size and look.`
+                        : `Sizes above ${max}px are bigger than recommended. This text just grows; the chart's frame stays as it is, so check that it still fits.`}
+                    confirmLabel={expand ? 'Expand frame & continue' : `Use ${pending}px`}
+                    confirmClass="btn-primary"
+                    onCancel={cancel}
+                    onConfirm={confirm}
+                />,
+                document.body
+            )}
+        </Row>
     );
 }
 

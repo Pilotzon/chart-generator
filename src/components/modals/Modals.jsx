@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
 import { IconTrash, IconWarning } from '../controls/Icons.jsx';
 
-function Modal({ icon, danger, title, message, confirmLabel, confirmClass, onCancel, onConfirm }) {
+export function Modal({ icon, danger, title, message, confirmLabel, confirmClass, onCancel, onConfirm }) {
     useEffect(() => {
         const onKey = (e) => { if (e.key === 'Escape') onCancel(); };
         window.addEventListener('keydown', onKey);

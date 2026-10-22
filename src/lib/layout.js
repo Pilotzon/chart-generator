@@ -1,4 +1,4 @@
-import { MAX_COLUMNS } from './constants.js';
+import { FONT_SIZE_LIMITS, MAX_COLUMNS, MAX_EXPANDED_SIDE } from './constants.js';
 import { defaultColumn } from './defaults.js';
 import { hasText, flipRunsForWord, runsToPlainText, splitRunsIntoLines, wrapRuns } from './richText.js';
 import { measureRunWidth } from './canvasText.js';
@@ -18,7 +18,8 @@ export function getMeasureCtx() {
     return measureCtx;
 }
 
-export function getCanvasSize(state) {
+/** The canvas size exactly as set in the Canvas Size controls. */
+export function getBaseCanvasSize(state) {
     const clamp = v => Math.max(300, Math.min(2000, v));
     if (state.squareMode) {
         const s = clamp(parseInt(state.squareSize) || 700);
@@ -28,6 +29,67 @@ export function getCanvasSize(state) {
         width: clamp(parseInt(state.canvasWidth) || 850),
         height: clamp(parseInt(state.canvasHeight) || 680)
     };
+}
+
+/** True when a font size that takes part in the layout is above its recommended maximum. */
+export function hasOversizedText(state) {
+    return Object.entries(FONT_SIZE_LIMITS).some(([key, { max, expand }]) =>
+        expand && (parseFloat(state[key]) || 0) > max);
+}
+
+/** The state with every layout-relevant font size capped at its recommended maximum. */
+function cappedFonts(state) {
+    const capped = { ...state };
+    Object.entries(FONT_SIZE_LIMITS).forEach(([key, { max, expand }]) => {
+        if (expand && parseFloat(state[key]) > max) capped[key] = max;
+    });
+    return capped;
+}
+
+/**
+ * The canvas size to draw / export.
+ *
+ * Normally that is the size set by the user. When a text is larger than its recommended maximum, nothing is
+ * squeezed: the frame grows by exactly the extra room the bigger text needs on each side, so the plot area, the
+ * grid, the line and every other element keep the size and look they have with the maximum font size.
+ */
+export function getCanvasSize(state) {
+    const base = getBaseCanvasSize(state);
+    if (!hasOversizedText(state)) return { ...base, baseWidth: base.width, baseHeight: base.height, expanded: false };
+
+    const ref = computeLayout(cappedFonts(state), base.width, base.height);
+    const refX = ref.pad.left + ref.pad.right;
+    const refY = ref.pad.top + ref.pad.bottom;
+    const needW = titleBlockWidth(state);
+    let W = base.width, H = base.height;
+    for (let i = 0; i < 6; i++) {
+        const l = computeLayout(state, W, H);
+        const nextW = Math.min(MAX_EXPANDED_SIDE, Math.max(base.width, Math.ceil(base.width + (l.pad.left + l.pad.right) - refX), needW));
+        const nextH = Math.min(MAX_EXPANDED_SIDE, Math.max(base.height, Math.ceil(base.height + (l.pad.top + l.pad.bottom) - refY)));
+        if (nextW === W && nextH === H) break;
+        W = nextW; H = nextH;
+    }
+    if (state.squareMode) W = H = Math.max(W, H);
+    return { width: W, height: H, baseWidth: base.width, baseHeight: base.height, expanded: W !== base.width || H !== base.height };
+}
+
+/** Width a (possibly huge) title / subtitle needs so it is not cut off at the canvas edge. */
+function titleBlockWidth(state) {
+    const mctx = getMeasureCtx();
+    let widest = 0;
+    const measure = (runs, px, font) => {
+        if (!hasText(runs)) return;
+        splitRunsIntoLines(runs).forEach(line => {
+            widest = Math.max(widest, line.reduce((sum, run) => sum + measureRunWidth(mctx, run, px, font), 0));
+        });
+    };
+    if ((parseFloat(state.titleFontSize) || 0) > FONT_SIZE_LIMITS.titleFontSize.max) {
+        measure(state.titleRuns, parseInt(state.titleFontSize), state.titleFont);
+    }
+    if (state.hasSubtitle && (parseFloat(state.subtitleFontSize) || 0) > FONT_SIZE_LIMITS.subtitleFontSize.max) {
+        measure(state.subtitleRuns, parseInt(state.subtitleFontSize), state.subtitleFont || state.titleFont);
+    }
+    return widest > 0 ? Math.min(MAX_EXPANDED_SIDE, Math.ceil(widest + 60)) : 0;
 }
 
 // ─────────────────────────────────────────────

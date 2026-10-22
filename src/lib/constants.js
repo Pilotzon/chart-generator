@@ -38,3 +38,22 @@ export const TEXT_RUNS_KEYS = {
 };
 
 export const MAX_COLUMNS = 60;
+
+/**
+ * Recommended maximum font sizes (px). Above these the chart's frame grows instead of squeezing everything in
+ * (`expand: true` = the text takes part in the layout, so the frame has to grow to make room for it).
+ */
+export const FONT_SIZE_LIMITS = {
+    titleFontSize: { max: 40, expand: true },
+    subtitleFontSize: { max: 30, expand: true },
+    axisFontSize: { max: 36, expand: true },
+    tickFontSize: { max: 30, expand: true },
+    columnTitleFontSize: { max: 40, expand: true },
+    legendFontSize: { max: 24, expand: false },
+    markedFontSize: { max: 30, expand: false },
+    chartLabelFontSize: { max: 30, expand: false }
+};
+/** Absolute upper bound of every font size field. */
+export const FONT_HARD_MAX = 200;
+/** The frame never grows past this (px per side). */
+export const MAX_EXPANDED_SIDE = 6000;

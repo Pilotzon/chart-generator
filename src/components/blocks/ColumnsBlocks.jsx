@@ -7,7 +7,7 @@ import { runsToPlainText } from '../../lib/richText.js';
 import { ChartLines, clamp01 } from '../controls/Sketches.jsx';
 import { RichTextEditor } from '../richtext/RichTextEditor.jsx';
 import {
-    AlignRow, ColorRow, Divider, DropdownRow, FontRow, RangeRow, Reveal, StepperRow, ToggleRow
+    AlignRow, ColorRow, Divider, DropdownRow, FontRow, FontSizeRow, RangeRow, Reveal, StepperRow, ToggleRow
 } from '../controls/Inputs.jsx';
 
 const fmt = (n) => String(+Number(n).toFixed(2));
@@ -21,7 +21,7 @@ export function ColumnDefaultsBlock() {
                 Font and size apply to all column titles. Alignment, placement and background are set per column.
             </p>
             <FontRow value={state.columnTitleFont} onChange={v => set('columnTitleFont', v)} />
-            <StepperRow label="Size" min={8} max={40} value={state.columnTitleFontSize} onChange={v => set('columnTitleFontSize', v)} />
+            <FontSizeRow label="Size" limitKey="columnTitleFontSize" value={state.columnTitleFontSize} onChange={v => set('columnTitleFontSize', v)} />
         </>
     );
 }
