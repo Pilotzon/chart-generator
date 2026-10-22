@@ -64,6 +64,38 @@ function runsToPlainText(runs) {
     return runs.map(r => r.text).join('');
 }
 
+// A text box counts as "empty" when it has no visible characters (whitespace-only = empty)
+function hasText(runs) {
+    return runsToPlainText(runs).trim().length > 0;
+}
+
+// Flip a text box: every line is mirrored character-by-character ("hello" -> "olleh"),
+// per-character formatting (bold / italic / underline / color) travels with its character.
+function invertRuns(runs) {
+    if (!runs || !runs.length) return [];
+    const lines = [[]];
+    runs.forEach(run => {
+        Array.from(run.text).forEach(ch => {
+            if (ch === '\n') lines.push([]);
+            else lines[lines.length - 1].push({ ch, bold: run.bold, italic: run.italic, underline: run.underline, color: run.color });
+        });
+    });
+    const out = [];
+    lines.forEach((line, i) => {
+        if (i > 0) out.push({ text: '\n', bold: false, italic: false, underline: false, color: '#000000' });
+        line.reverse().forEach(c => {
+            const last = out[out.length - 1];
+            if (last && last.text !== '\n' && last.bold === c.bold && last.italic === c.italic
+                && last.underline === c.underline && last.color === c.color) {
+                last.text += c.ch;
+            } else {
+                out.push({ text: c.ch, bold: c.bold, italic: c.italic, underline: c.underline, color: c.color });
+            }
+        });
+    });
+    return out;
+}
+
 function defaultChart(name = 'Chart 1', colorIdx = 0) {
     return {
         id: 'chart_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
@@ -143,7 +175,6 @@ function defaultStateBase() {
         arrowBottom: true,
         arrowLeft: true,
 
-        bgColor: "#ffffff",
         gridColor: "#999999",
         gridLineWidth: 1.2,
         gridLineStyle: "solid",
@@ -396,7 +427,7 @@ function refreshAllUI() {
         'borderColor', 'borderWidth',
         'showAxisArrows', 'axisArrowStyle', 'axisArrowSize',
         'arrowTop', 'arrowRight', 'arrowBottom', 'arrowLeft',
-        'bgColor', 'gridColor', 'gridLineWidth', 'gridLineStyle', 'tickColor', 'tickLength',
+        'gridColor', 'gridLineWidth', 'gridLineStyle', 'tickColor', 'tickLength',
         'canvasWidth', 'canvasHeight', 'squareMode', 'squareSize',
         'showLegend', 'legendPosition', 'legendFont', 'legendFontSize', 'legendBg', 'legendBorder',
         'markedFont', 'markedFontSize'
@@ -549,17 +580,23 @@ function getPaddings() {
     const xText = runsToPlainText(state.xLabelRuns);
     const yText = runsToPlainText(state.yLabelRuns);
 
-    const titleLines = titleText ? titleText.split('\n').length : 0;
-    const subtitleLines = (state.hasSubtitle && subtitleText) ? subtitleText.split('\n').length : 0;
-    const xLines = xText ? xText.split('\n').length : 0;
-    const yLines = yText ? yText.split('\n').length : 0;
+    const hasTitle = hasText(state.titleRuns);
+    const hasSub = state.hasSubtitle && hasText(state.subtitleRuns);
+    const hasX = hasText(state.xLabelRuns);
+    const hasY = hasText(state.yLabelRuns);
 
+    const titleLines = hasTitle ? titleText.split('\n').length : 0;
+    const subtitleLines = hasSub ? subtitleText.split('\n').length : 0;
+    const xLines = hasX ? xText.split('\n').length : 0;
+    const yLines = hasY ? yText.split('\n').length : 0;
+
+    // Empty text boxes reserve no space at all
     let top = 30;
     if (titleLines > 0) top += titleLines * (titleFontPx * 1.4);
     if (subtitleLines > 0) top += subtitleLines * (subtitleFontPx * 1.4) + 4;
     top += 15;
 
-    const bottom = tLen + tickFontPx + 15 + Math.max(xLines, 1) * (axisFontPx * 1.4) + 20;
+    const bottom = tLen + tickFontPx + 15 + xLines * (axisFontPx * 1.4) + (hasX ? 20 : 5);
 
     const yTickCharW = tickFontPx * 0.65;
     const maxYStr = Math.max(
@@ -567,13 +604,13 @@ function getPaddings() {
         Math.abs(state.yMax).toString().length
     );
     const yTickW = Math.max(25, maxYStr * yTickCharW);
-    const left = tLen + yTickW + 10 + Math.max(yLines, 1) * (axisFontPx * 1.4) + 25;
+    const left = tLen + yTickW + 10 + yLines * (axisFontPx * 1.4) + (hasY ? 25 : 10);
 
     return {
-        top: Math.max(80, top),
+        top: Math.max((hasTitle || hasSub) ? 80 : 40, top),
         right: 40,
-        bottom: Math.max(80, bottom),
-        left: Math.max(90, left)
+        bottom: Math.max(hasX ? 80 : 50, bottom),
+        left: Math.max(hasY ? 90 : 55, left)
     };
 }
 
@@ -777,65 +814,6 @@ function initializeEditors() {
     });
 }
 
-function applyFormatCommand(editorId, cmd, value) {
-    const editor = document.getElementById(editorId);
-    if (!editor) return;
-    // Always use CSS-style output for execCommand
-    try { document.execCommand('styleWithCSS', false, true); } catch (e) { }
-
-    if (currentMode === 'advanced') {
-        editor.focus();
-        const sel = window.getSelection();
-        const hasSelection = sel && sel.rangeCount > 0 && !sel.isCollapsed
-            && sel.anchorNode && editor.contains(sel.anchorNode);
-
-        if (hasSelection) {
-            if (cmd === 'bold') document.execCommand('bold', false, null);
-            else if (cmd === 'italic') document.execCommand('italic', false, null);
-            else if (cmd === 'underline') document.execCommand('underline', false, null);
-            else if (cmd === 'color') document.execCommand('foreColor', false, value);
-        } else {
-            // No selection — apply to entire editor content
-            const range = document.createRange();
-            range.selectNodeContents(editor);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            if (cmd === 'bold') document.execCommand('bold', false, null);
-            else if (cmd === 'italic') document.execCommand('italic', false, null);
-            else if (cmd === 'underline') document.execCommand('underline', false, null);
-            else if (cmd === 'color') document.execCommand('foreColor', false, value);
-            sel.removeAllRanges();
-        }
-        const runsKey = editorIdToRunsKey(editorId);
-        state[runsKey] = htmlToRuns(editor);
-        applyEditorDirection(editor);
-        saveState();
-        render();
-    } else {
-        const runsKey = editorIdToRunsKey(editorId);
-        let runs = state[runsKey] || [];
-        if (runs.length === 0) {
-            runs = [{ text: '', bold: false, italic: false, underline: false, color: '#000000' }];
-            state[runsKey] = runs;
-        }
-        if (cmd === 'bold') {
-            const anyNot = runs.some(r => !r.bold);
-            runs.forEach(r => r.bold = anyNot);
-        } else if (cmd === 'italic') {
-            const anyNot = runs.some(r => !r.italic);
-            runs.forEach(r => r.italic = anyNot);
-        } else if (cmd === 'underline') {
-            const anyNot = runs.some(r => !r.underline);
-            runs.forEach(r => r.underline = anyNot);
-        } else if (cmd === 'color') {
-            runs.forEach(r => r.color = value);
-        }
-        setEditorContent(editor, runs);
-        saveState();
-        render();
-    }
-}
-
 function editorIdToRunsKey(editorId) {
     const map = {
         'titleText': 'titleRuns',
@@ -846,25 +824,129 @@ function editorIdToRunsKey(editorId) {
     return map[editorId] || editorId + 'Runs';
 }
 
+// ─────────────────────────────────────────────
+// Floating selection toolbar (classic + advanced)
+// Appears only while text inside a rich-text editor is selected and
+// formats exactly that selection.
+// ─────────────────────────────────────────────
+const selFmtToolbar = document.getElementById('selFmtToolbar');
+const selFmtColor = document.getElementById('selFmtColor');
+let selFmtEditor = null;       // editor element the toolbar is currently attached to
+let selFmtRange = null;        // last known selection range inside that editor
+let selFmtPickerOpen = false;  // native colour picker is open (selection may be lost meanwhile)
+
+function getSelectionEditor() {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return null;
+    const range = sel.getRangeAt(0);
+    const node = range.commonAncestorContainer;
+    const el = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+    const editor = el && el.closest ? el.closest('.rich-text-editor') : null;
+    if (!editor || editor.getAttribute('contenteditable') !== 'true') return null;
+    if (!sel.toString().length) return null;
+    return editor;
+}
+
+function hideSelectionToolbar() {
+    selFmtToolbar.style.display = 'none';
+    selFmtEditor = null;
+    selFmtRange = null;
+    selFmtPickerOpen = false;
+}
+
+function updateSelectionToolbar() {
+    if (selFmtPickerOpen) return; // keep the toolbar alive while picking a colour
+    const editor = getSelectionEditor();
+    if (!editor) { hideSelectionToolbar(); return; }
+    const range = window.getSelection().getRangeAt(0);
+    selFmtEditor = editor;
+    selFmtRange = range.cloneRange();
+
+    // Active-state of the buttons reflects the current selection
+    selFmtToolbar.querySelectorAll('.fmt-btn').forEach(btn => {
+        let on = false;
+        try { on = document.queryCommandState(btn.dataset.fmt); } catch (e) { }
+        btn.classList.toggle('active', !!on);
+    });
+
+    selFmtToolbar.style.visibility = 'hidden';
+    selFmtToolbar.style.display = 'flex';
+    const rects = range.getClientRects();
+    const rect = rects.length ? rects[0] : range.getBoundingClientRect();
+    const tw = selFmtToolbar.offsetWidth, th = selFmtToolbar.offsetHeight;
+    let left = rect.left + rect.width / 2 - tw / 2;
+    let top = rect.top - th - 8;
+    if (top < 8) top = rect.bottom + 8;
+    left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+    selFmtToolbar.style.left = `${left}px`;
+    selFmtToolbar.style.top = `${top}px`;
+    selFmtToolbar.style.visibility = 'visible';
+}
+
+function applySelectionFormat(cmd, value) {
+    const editor = selFmtEditor;
+    if (!editor) return;
+    editor.focus();
+    // Restore the selection (it can be lost when interacting with the colour picker)
+    const sel = window.getSelection();
+    if (selFmtRange) {
+        sel.removeAllRanges();
+        sel.addRange(selFmtRange);
+    }
+    if (sel.isCollapsed) return;
+    try { document.execCommand('styleWithCSS', false, true); } catch (e) { }
+    if (cmd === 'bold') document.execCommand('bold', false, null);
+    else if (cmd === 'italic') document.execCommand('italic', false, null);
+    else if (cmd === 'underline') document.execCommand('underline', false, null);
+    else if (cmd === 'color') document.execCommand('foreColor', false, value);
+
+    applyEditorDirection(editor);
+    if (editor.id === 'quickInput') {
+        // quick-edit popover: committed on "Save changes"
+    } else {
+        const runsKey = editorIdToRunsKey(editor.id);
+        state[runsKey] = htmlToRuns(editor);
+        saveState();
+        render();
+    }
+    if (sel.rangeCount) selFmtRange = sel.getRangeAt(0).cloneRange();
+    selFmtToolbar.querySelectorAll('.fmt-btn').forEach(btn => {
+        let on = false;
+        try { on = document.queryCommandState(btn.dataset.fmt); } catch (e) { }
+        btn.classList.toggle('active', !!on);
+    });
+}
+
 function setupFormatToolbars() {
-    document.querySelectorAll('.fmt-btn').forEach(btn => {
-        if (btn.dataset.bound === '1') return;
-        btn.dataset.bound = '1';
-        btn.addEventListener('mousedown', (e) => e.preventDefault());
-        btn.addEventListener('click', () => {
-            const key = btn.dataset.key;
-            const fmt = btn.dataset.fmt;
-            if (key && fmt) applyFormatCommand(key, fmt);
-        });
+    if (selFmtToolbar.dataset.bound === '1') return;
+    selFmtToolbar.dataset.bound = '1';
+
+    selFmtToolbar.querySelectorAll('.fmt-btn').forEach(btn => {
+        btn.addEventListener('mousedown', e => e.preventDefault()); // keep the text selection
+        btn.addEventListener('click', () => applySelectionFormat(btn.dataset.fmt));
     });
-    document.querySelectorAll('.fmt-color-btn').forEach(inp => {
-        if (inp.dataset.bound === '1') return;
-        inp.dataset.bound = '1';
-        inp.addEventListener('input', () => {
-            const key = inp.dataset.key;
-            if (key) applyFormatCommand(key, 'color', inp.value);
-        });
+
+    selFmtColor.addEventListener('mousedown', () => { selFmtPickerOpen = true; });
+    selFmtColor.addEventListener('input', () => applySelectionFormat('color', selFmtColor.value));
+    selFmtColor.addEventListener('change', () => {
+        selFmtPickerOpen = false;
+        applySelectionFormat('color', selFmtColor.value);
+        // re-evaluate once the picker has closed
+        setTimeout(updateSelectionToolbar, 0);
     });
+
+    document.addEventListener('selectionchange', () => {
+        if (selFmtPickerOpen) return;
+        updateSelectionToolbar();
+    });
+    // Clicking anywhere outside the toolbar and editors cancels a pending colour pick
+    document.addEventListener('mousedown', e => {
+        if (!selFmtToolbar.contains(e.target)) selFmtPickerOpen = false;
+    });
+    window.addEventListener('resize', hideSelectionToolbar);
+    document.addEventListener('scroll', () => {
+        if (selFmtToolbar.style.display !== 'none') updateSelectionToolbar();
+    }, true);
 }
 
 function toggleGroup(id) {
@@ -1582,7 +1664,7 @@ function setupInputs() {
         'borderColor', 'borderWidth',
         'showAxisArrows', 'axisArrowStyle', 'axisArrowSize',
         'arrowTop', 'arrowRight', 'arrowBottom', 'arrowLeft',
-        'bgColor', 'gridColor', 'gridLineWidth', 'gridLineStyle', 'tickColor', 'tickLength',
+        'gridColor', 'gridLineWidth', 'gridLineStyle', 'tickColor', 'tickLength',
         'canvasWidth', 'canvasHeight', 'squareMode', 'squareSize',
         'showLegend', 'legendPosition', 'legendFont', 'legendFontSize', 'legendBg', 'legendBorder',
         'markedFont', 'markedFontSize'
@@ -2184,35 +2266,41 @@ function render() {
     const pw = plotW(pad);
     const ph = plotH(pad);
 
-    ctx.fillStyle = state.bgColor || '#fff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Background is intentionally NOT painted: the chart is transparent (PNG alpha).
 
     const titleFontPx = parseInt(state.titleFontSize) || 20;
     const subtitleFontPx = parseInt(state.subtitleFontSize) || 16;
     const axisFontPx = parseInt(state.axisFontSize) || 18;
     const tickFontPx = parseInt(state.tickFontSize) || 15;
 
-    // Title
-    if (state.titleRuns && state.titleRuns.length > 0) {
-        const isRtl = hasHebrewInRuns(state.titleRuns);
-        const lineH = titleFontPx * 1.35;
-        let tx = canvas.width / 2;
-        let anchor = 'center';
-        if (state.titlePosition === 'top-left') { tx = pad.left; anchor = 'left'; }
-        if (state.titlePosition === 'top-right') { tx = canvas.width - pad.right; anchor = 'right'; }
-        ctx.textBaseline = 'top';
-        const startY = 22;
-        const linesDrawn = drawRichText(state.titleRuns, tx, startY, titleFontPx, state.titleFont, anchor, isRtl, lineH);
-        let afterTitleY = startY + linesDrawn * lineH;
-        if (state.hasSubtitle && state.subtitleRuns && state.subtitleRuns.length > 0) {
-            const subLineH = subtitleFontPx * 1.35;
-            const isSubRtl = hasHebrewInRuns(state.subtitleRuns);
-            const subStartY = afterTitleY + 4;
-            drawRichText(state.subtitleRuns, tx, subStartY, subtitleFontPx, state.subtitleFont || state.titleFont, anchor, isSubRtl, subLineH);
-            const subLines = splitRunsIntoLines(state.subtitleRuns).length;
-            registerHitbox('subtitleText', tx - 250, subStartY - 5, 500, subLines * subLineH + 10);
+    // Title + subtitle (each is skipped entirely when empty)
+    {
+        const showTitle = hasText(state.titleRuns);
+        const showSub = state.hasSubtitle && hasText(state.subtitleRuns);
+        if (showTitle || showSub) {
+            let tx = canvas.width / 2;
+            let anchor = 'center';
+            if (state.titlePosition === 'top-left') { tx = pad.left; anchor = 'left'; }
+            if (state.titlePosition === 'top-right') { tx = canvas.width - pad.right; anchor = 'right'; }
+            ctx.textBaseline = 'top';
+            const startY = 22;
+            let afterTitleY = startY;
+            if (showTitle) {
+                const isRtl = hasHebrewInRuns(state.titleRuns);
+                const lineH = titleFontPx * 1.35;
+                const linesDrawn = drawRichText(state.titleRuns, tx, startY, titleFontPx, state.titleFont, anchor, isRtl, lineH);
+                afterTitleY = startY + linesDrawn * lineH;
+                registerHitbox('titleText', tx - 250, startY - 5, 500, linesDrawn * lineH + 10);
+            }
+            if (showSub) {
+                const subLineH = subtitleFontPx * 1.35;
+                const isSubRtl = hasHebrewInRuns(state.subtitleRuns);
+                const subStartY = afterTitleY + (showTitle ? 4 : 0);
+                drawRichText(state.subtitleRuns, tx, subStartY, subtitleFontPx, state.subtitleFont || state.titleFont, anchor, isSubRtl, subLineH);
+                const subLines = splitRunsIntoLines(state.subtitleRuns).length;
+                registerHitbox('subtitleText', tx - 250, subStartY - 5, 500, subLines * subLineH + 10);
+            }
         }
-        registerHitbox('titleText', tx - 250, startY - 5, 500, linesDrawn * lineH + 10);
     }
 
     // Grid
@@ -2332,7 +2420,7 @@ function render() {
     }
 
     // Axis labels
-    if (state.xLabelRuns && state.xLabelRuns.length > 0) {
+    if (hasText(state.xLabelRuns)) {
         const isRtl = hasHebrewInRuns(state.xLabelRuns);
         const lineH = axisFontPx * 1.35;
         const startY = pad.top + ph + tLen + tickFontPx + 14;
@@ -2342,7 +2430,7 @@ function render() {
         registerHitbox('xLabel', cx - 200, startY - 5, 400, linesDrawn * lineH + 10);
     }
 
-    if (state.yLabelRuns && state.yLabelRuns.length > 0) {
+    if (hasText(state.yLabelRuns)) {
         const isRtl = hasHebrewInRuns(state.yLabelRuns);
         const lineH = axisFontPx * 1.35;
         const totalLines = splitRunsIntoLines(state.yLabelRuns).length;
@@ -2506,7 +2594,7 @@ function drawChart(chart, pad) {
         });
     }
 
-    if (currentMode === 'advanced' && chart.showChartLabel && chart.name) {
+    if (currentMode === 'advanced' && chart.showChartLabel && chart.name && chart.name.trim()) {
         drawChartNameLabel(chart, pad);
     }
 }
@@ -2571,7 +2659,13 @@ function drawMarker(px, py, size, shape, active, outlineW, outlineC) {
 // ─────────────────────────────────────────────
 // Legend
 // ─────────────────────────────────────────────
+function getLegendCharts() {
+    return state.charts.filter(c => c.name && c.name.trim());
+}
+
 function drawLegend(pad) {
+    const legendCharts = getLegendCharts();
+    if (legendCharts.length === 0) return;
     const fontSize = parseInt(state.legendFontSize) || 13;
     const legendFont = state.legendFont || state.axisFont || 'sans-serif';
     const padding = 10;
@@ -2580,9 +2674,9 @@ function drawLegend(pad) {
     const gap = 8;
     ctx.font = `500 ${fontSize}px ${legendFont}`;
     let maxTextW = 0;
-    state.charts.forEach(c => { const w = ctx.measureText(c.name).width; if (w > maxTextW) maxTextW = w; });
+    legendCharts.forEach(c => { const w = ctx.measureText(c.name).width; if (w > maxTextW) maxTextW = w; });
     const boxW = padding * 2 + swatchSize + gap + maxTextW;
-    const boxH = padding * 2 + state.charts.length * rowHeight - (rowHeight - fontSize - 4);
+    const boxH = padding * 2 + legendCharts.length * rowHeight - (rowHeight - fontSize - 4);
     const pw = plotW(pad), ph = plotH(pad);
     let x, y;
     const margin = 12;
@@ -2605,7 +2699,7 @@ function drawLegend(pad) {
     }
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
-    state.charts.forEach((c, i) => {
+    legendCharts.forEach((c, i) => {
         const rowY = y + padding + rowHeight * i + rowHeight / 2 - 2;
         ctx.fillStyle = c.color;
         ctx.beginPath();
@@ -2792,29 +2886,6 @@ function openQuickEdit(key, clickPos) {
         key === 'subtitleText' ? 'Edit subtitle' :
             key === 'xLabel' ? 'Edit X-axis label' : 'Edit Y-axis label';
     titleEl.innerHTML = `${iconSvg} ${labelText}`;
-    const toolbar = document.getElementById('quickFmtToolbar');
-    toolbar.querySelectorAll('.fmt-btn').forEach(btn => {
-        const clone = btn.cloneNode(true);
-        btn.replaceWith(clone);
-    });
-    const colorBtn = document.getElementById('quickFmtColor');
-    if (colorBtn) {
-        const cClone = colorBtn.cloneNode(true);
-        colorBtn.replaceWith(cClone);
-    }
-    toolbar.querySelectorAll('.fmt-btn').forEach(btn => {
-        btn.addEventListener('mousedown', e => e.preventDefault());
-        btn.addEventListener('click', () => {
-            const fmt = btn.dataset.fmt;
-            applyQuickEditFormat(fmt);
-        });
-    });
-    const freshColor = document.getElementById('quickFmtColor');
-    if (freshColor) {
-        freshColor.addEventListener('input', () => {
-            applyQuickEditFormat('color', freshColor.value);
-        });
-    }
     quickEditBox.style.visibility = 'hidden';
     quickEditBox.style.display = 'flex';
     quickEditBox.style.left = '0px';
@@ -2824,38 +2895,6 @@ function openQuickEdit(key, clickPos) {
         quickEditBox.style.visibility = 'visible';
         setTimeout(() => quickInput.focus(), 30);
     });
-}
-
-function applyQuickEditFormat(cmd, value) {
-    quickInput.focus();
-    try { document.execCommand('styleWithCSS', false, true); } catch (e) { }
-    const sel = window.getSelection();
-    if (currentMode === 'advanced') {
-        if (sel && sel.rangeCount > 0 && !sel.isCollapsed && sel.anchorNode && quickInput.contains(sel.anchorNode)) {
-            if (cmd === 'bold') document.execCommand('bold', false, null);
-            else if (cmd === 'italic') document.execCommand('italic', false, null);
-            else if (cmd === 'underline') document.execCommand('underline', false, null);
-            else if (cmd === 'color') document.execCommand('foreColor', false, value);
-        } else {
-            const range = document.createRange();
-            range.selectNodeContents(quickInput);
-            sel.removeAllRanges();
-            sel.addRange(range);
-            if (cmd === 'bold') document.execCommand('bold', false, null);
-            else if (cmd === 'italic') document.execCommand('italic', false, null);
-            else if (cmd === 'underline') document.execCommand('underline', false, null);
-            else if (cmd === 'color') document.execCommand('foreColor', false, value);
-            sel.removeAllRanges();
-        }
-        applyEditorDirection(quickInput);
-    } else {
-        const runs = htmlToRuns(quickInput);
-        if (cmd === 'bold') { const anyNot = runs.some(r => !r.bold); runs.forEach(r => r.bold = anyNot); }
-        else if (cmd === 'italic') { const anyNot = runs.some(r => !r.italic); runs.forEach(r => r.italic = anyNot); }
-        else if (cmd === 'underline') { const anyNot = runs.some(r => !r.underline); runs.forEach(r => r.underline = anyNot); }
-        else if (cmd === 'color') { runs.forEach(r => r.color = value); }
-        setEditorContent(quickInput, runs);
-    }
 }
 
 function positionQuickEditAtCursor() {
@@ -2877,6 +2916,7 @@ function positionQuickEditAtCursor() {
 }
 
 function closeQuickEdit() {
+    if (selFmtEditor === quickInput) hideSelectionToolbar();
     quickEditBox.style.display = 'none';
     activeQuickEditKey = null;
     quickEditClickPos = null;
@@ -3000,7 +3040,14 @@ function buildSvgArrowHead(x, y, angle, size, style, color) {
     return '';
 }
 
-function buildVectorSVG() {
+function buildVectorSVG(opts = {}) {
+    const invertText = !!opts.invertText;
+    // "Invert text boxes": mirror title / subtitle / axis text boxes character by character
+    const txt = runs => invertText ? invertRuns(runs) : runs;
+    const titleRuns = txt(state.titleRuns);
+    const subtitleRuns = txt(state.subtitleRuns);
+    const xLabelRuns = txt(state.xLabelRuns);
+    const yLabelRuns = txt(state.yLabelRuns);
     const pad = getPaddings();
     const pw = plotW(pad);
     const ph = plotH(pad);
@@ -3012,21 +3059,27 @@ function buildVectorSVG() {
     const gridW = parseFloat(state.gridLineWidth);
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}">\n`;
-    svg += `<rect width="100%" height="100%" fill="${state.bgColor || '#fff'}"/>\n`;
+    // No background rect: the exported SVG is transparent.
 
-    if (state.titleRuns && state.titleRuns.length > 0) {
-        const lines = splitRunsIntoLines(state.titleRuns);
-        const lineH = titleFontPx * 1.35;
-        const isRtl = hasHebrewInRuns(state.titleRuns);
+    {
+        const showTitle = hasText(titleRuns);
+        const showSub = state.hasSubtitle && hasText(subtitleRuns);
         let tx = canvas.width / 2, anchor = 'middle';
         if (state.titlePosition === 'top-left') { tx = pad.left; anchor = 'start'; }
         if (state.titlePosition === 'top-right') { tx = canvas.width - pad.right; anchor = 'end'; }
-        svg += buildSvgRichText(state.titleRuns, tx, 22 + titleFontPx * 0.82, titleFontPx, state.titleFont, anchor, isRtl, lineH);
-        let afterY = 22 + titleFontPx * 0.82 + lines.length * lineH;
-        if (state.hasSubtitle && state.subtitleRuns && state.subtitleRuns.length > 0) {
+        let afterY = 22;
+        if (showTitle) {
+            const lines = splitRunsIntoLines(titleRuns);
+            const lineH = titleFontPx * 1.35;
+            const isRtl = hasHebrewInRuns(titleRuns);
+            svg += buildSvgRichText(titleRuns, tx, 22 + titleFontPx * 0.82, titleFontPx, state.titleFont, anchor, isRtl, lineH);
+            afterY = 22 + lines.length * lineH;
+        }
+        if (showSub) {
             const subLineH = subtitleFontPx * 1.35;
-            const isSubRtl = hasHebrewInRuns(state.subtitleRuns);
-            svg += buildSvgRichText(state.subtitleRuns, tx, afterY + subtitleFontPx * 0.82, subtitleFontPx, state.subtitleFont || state.titleFont, anchor, isSubRtl, subLineH);
+            const isSubRtl = hasHebrewInRuns(subtitleRuns);
+            const subStartY = afterY + (showTitle ? 4 : 0);
+            svg += buildSvgRichText(subtitleRuns, tx, subStartY + subtitleFontPx * 0.82, subtitleFontPx, state.subtitleFont || state.titleFont, anchor, isSubRtl, subLineH);
         }
     }
 
@@ -3099,19 +3152,19 @@ function buildVectorSVG() {
         svg += `<text x="${pad.left - tLen - 6}" y="${yPx}" font-family="${escXml(state.tickFont)}" font-size="${tickFontPx}" text-anchor="end" dominant-baseline="central" fill="#000">${label}</text>\n`;
     }
 
-    if (state.xLabelRuns && state.xLabelRuns.length > 0) {
-        const isRtl = hasHebrewInRuns(state.xLabelRuns);
+    if (hasText(xLabelRuns)) {
+        const isRtl = hasHebrewInRuns(xLabelRuns);
         const lineH = axisFontPx * 1.35;
         const startY = pad.top + ph + tLen + tickFontPx + 14 + axisFontPx * 0.82;
         const cx = pad.left + pw / 2;
-        svg += buildSvgRichText(state.xLabelRuns, cx, startY, axisFontPx, state.axisFont, 'middle', isRtl, lineH);
+        svg += buildSvgRichText(xLabelRuns, cx, startY, axisFontPx, state.axisFont, 'middle', isRtl, lineH);
     }
-    if (state.yLabelRuns && state.yLabelRuns.length > 0) {
-        const isRtl = hasHebrewInRuns(state.yLabelRuns);
+    if (hasText(yLabelRuns)) {
+        const isRtl = hasHebrewInRuns(yLabelRuns);
         const lineH = axisFontPx * 1.35;
         const xPos = 25;
         const cy = pad.top + ph / 2;
-        const lines = splitRunsIntoLines(state.yLabelRuns);
+        const lines = splitRunsIntoLines(yLabelRuns);
         svg += `<g transform="translate(${xPos},${cy}) rotate(-90)">\n`;
         lines.forEach((line, li) => {
             const yOff = (li - (lines.length - 1) / 2) * lineH;
@@ -3211,7 +3264,7 @@ function buildVectorSVG() {
             }
         });
 
-        if (currentMode === 'advanced' && chart.showChartLabel && chart.name && chart.points.length > 0) {
+        if (currentMode === 'advanced' && chart.showChartLabel && chart.name && chart.name.trim() && chart.points.length > 0) {
             const anchor = chart.chartLabelAnchor || 'last';
             let idx = anchorToPointIndex(chart, anchor);
             if (idx < 0) idx = chart.points.length - 1;
@@ -3228,7 +3281,8 @@ function buildVectorSVG() {
         }
     });
 
-    if (currentMode === 'advanced' && state.showLegend && state.charts.length > 0) {
+    if (currentMode === 'advanced' && state.showLegend && getLegendCharts().length > 0) {
+        const legendCharts = getLegendCharts();
         const fontSize = parseInt(state.legendFontSize) || 13;
         const legendFont = state.legendFont || state.axisFont;
         const padding = 10;
@@ -3237,9 +3291,9 @@ function buildVectorSVG() {
         const gap = 8;
         ctx.font = `500 ${fontSize}px ${legendFont}`;
         let maxTextW = 0;
-        state.charts.forEach(c => { const w = ctx.measureText(c.name).width; if (w > maxTextW) maxTextW = w; });
+        legendCharts.forEach(c => { const w = ctx.measureText(c.name).width; if (w > maxTextW) maxTextW = w; });
         const boxW = padding * 2 + swatchSize + gap + maxTextW;
-        const boxH = padding * 2 + state.charts.length * rowHeight - (rowHeight - fontSize - 4);
+        const boxH = padding * 2 + legendCharts.length * rowHeight - (rowHeight - fontSize - 4);
         const margin = 12;
         let lx, ly;
         switch (state.legendPosition) {
@@ -3250,7 +3304,7 @@ function buildVectorSVG() {
             default: lx = pad.left + pw - boxW - margin; ly = pad.top + margin;
         }
         svg += `<rect x="${lx}" y="${ly}" width="${boxW}" height="${boxH}" rx="8" fill="${state.legendBg}" ${state.legendBorder ? 'stroke="rgba(0,0,0,0.12)" stroke-width="1"' : ''}/>\n`;
-        state.charts.forEach((c, i) => {
+        legendCharts.forEach((c, i) => {
             const rowY = ly + padding + rowHeight * i + rowHeight / 2 - 2;
             svg += `<circle cx="${lx + padding + swatchSize / 2}" cy="${rowY}" r="${swatchSize / 2}" fill="${c.color}"/>\n`;
             svg += `<text x="${lx + padding + swatchSize + gap}" y="${rowY}" font-size="${fontSize}" font-family="${escXml(legendFont)}" font-weight="500" dominant-baseline="central" fill="#333">${escXml(c.name)}</text>\n`;
@@ -3263,7 +3317,8 @@ function buildVectorSVG() {
 
 function exportSVG() {
     closeQuickEdit(); hideTooltip();
-    const svg = buildVectorSVG();
+    const invertEl = document.getElementById('invertTextSvg');
+    const svg = buildVectorSVG({ invertText: !!(invertEl && invertEl.checked) });
     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
     const link = document.createElement('a');
     link.download = 'graph-studio-vector.svg';

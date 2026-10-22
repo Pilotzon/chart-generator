@@ -1073,12 +1073,24 @@ textarea:focus {
     box-shadow: none;
 }
 
-/* ── Format toolbar ── */
-.format-toolbar {
-    display: flex;
+/* ── Floating selection format toolbar (tooltip) ── */
+.sel-fmt-toolbar {
+    position: fixed;
+    display: none;
     align-items: center;
     gap: 6px;
-    margin-top: -2px;
+    padding: 5px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xl);
+    z-index: 999990;
+    animation: subIn 0.15s var(--ease-out);
+}
+
+.sel-fmt-toolbar .fmt-group {
+    background: transparent;
+    border: none;
 }
 
 .fmt-group {
@@ -2096,6 +2108,13 @@ canvas {
     display: block;
     cursor: default;
     border-radius: var(--radius-md);
+    /* Checkerboard only visualises transparency in the preview; it is never exported */
+    background-color: #fff;
+    background-image:
+        linear-gradient(45deg, #ecebe7 25%, transparent 25%, transparent 75%, #ecebe7 75%),
+        linear-gradient(45deg, #ecebe7 25%, transparent 25%, transparent 75%, #ecebe7 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
 }
 
 /* ── Floating tooltip ── */
@@ -2172,6 +2191,30 @@ canvas {
     border-radius: var(--radius-lg);
     padding: 6px;
     box-shadow: 0 4px 16px rgba(60, 56, 46, 0.08);
+}
+
+.export-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    direction: ltr;
+}
+
+.export-option:hover {
+    color: var(--text-primary);
+}
+
+.export-option input {
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--text-primary);
 }
 
 .export-bar .btn {

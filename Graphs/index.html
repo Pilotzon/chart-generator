@@ -439,18 +439,6 @@
                                 <div class="rich-text-editor" id="titleText" contenteditable="true" dir="rtl"
                                     data-key="titleText"></div>
                             </div>
-                            <div class="format-toolbar">
-                                <div class="fmt-group">
-                                    <button type="button" class="fmt-btn fmt-btn-bold" data-fmt="bold"
-                                        data-key="titleText" title="Bold">B</button>
-                                    <button type="button" class="fmt-btn fmt-btn-underline" data-fmt="underline"
-                                        data-key="titleText" title="Underline">U</button>
-                                    <button type="button" class="fmt-btn fmt-btn-italic" data-fmt="italic"
-                                        data-key="titleText" title="Italic">I</button>
-                                </div>
-                                <input type="color" class="fmt-color-btn" data-key="titleText" value="#000000"
-                                    title="Text Color">
-                            </div>
 
                             <div class="control-row">
                                 <label>Position</label>
@@ -519,35 +507,11 @@
                                 <div class="rich-text-editor" id="xLabel" contenteditable="true" dir="rtl"
                                     data-key="xLabel"></div>
                             </div>
-                            <div class="format-toolbar">
-                                <div class="fmt-group">
-                                    <button type="button" class="fmt-btn fmt-btn-bold" data-fmt="bold" data-key="xLabel"
-                                        title="Bold">B</button>
-                                    <button type="button" class="fmt-btn fmt-btn-underline" data-fmt="underline"
-                                        data-key="xLabel" title="Underline">U</button>
-                                    <button type="button" class="fmt-btn fmt-btn-italic" data-fmt="italic"
-                                        data-key="xLabel" title="Italic">I</button>
-                                </div>
-                                <input type="color" class="fmt-color-btn" data-key="xLabel" value="#000000"
-                                    title="Text Color">
-                            </div>
 
                             <span class="field-label">Y-Axis Label</span>
                             <div class="rich-text-wrapper">
                                 <div class="rich-text-editor" id="yLabel" contenteditable="true" dir="rtl"
                                     data-key="yLabel"></div>
-                            </div>
-                            <div class="format-toolbar">
-                                <div class="fmt-group">
-                                    <button type="button" class="fmt-btn fmt-btn-bold" data-fmt="bold" data-key="yLabel"
-                                        title="Bold">B</button>
-                                    <button type="button" class="fmt-btn fmt-btn-underline" data-fmt="underline"
-                                        data-key="yLabel" title="Underline">U</button>
-                                    <button type="button" class="fmt-btn fmt-btn-italic" data-fmt="italic"
-                                        data-key="yLabel" title="Italic">I</button>
-                                </div>
-                                <input type="color" class="fmt-color-btn" data-key="yLabel" value="#000000"
-                                    title="Text Color">
                             </div>
 
                             <div class="control-row">
@@ -635,18 +599,6 @@
                                     <div class="rich-text-wrapper">
                                         <div class="rich-text-editor" id="subtitleText" contenteditable="true" dir="rtl"
                                             data-key="subtitleText"></div>
-                                    </div>
-                                    <div class="format-toolbar">
-                                        <div class="fmt-group">
-                                            <button type="button" class="fmt-btn fmt-btn-bold" data-fmt="bold"
-                                                data-key="subtitleText" title="Bold">B</button>
-                                            <button type="button" class="fmt-btn fmt-btn-underline" data-fmt="underline"
-                                                data-key="subtitleText" title="Underline">U</button>
-                                            <button type="button" class="fmt-btn fmt-btn-italic" data-fmt="italic"
-                                                data-key="subtitleText" title="Italic">I</button>
-                                        </div>
-                                        <input type="color" class="fmt-color-btn" data-key="subtitleText"
-                                            value="#666666" title="Text Color">
                                     </div>
 
                                     <div class="control-row">
@@ -1109,8 +1061,6 @@
                             </span>
                         </div>
                         <div class="group-body">
-                            <div class="control-row"><label>Background</label><input type="color" id="bgColor"
-                                    value="#ffffff"></div>
                             <div class="control-row"><label>Grid Color</label><input type="color" id="gridColor"
                                     value="#999999"></div>
                             <div class="control-row"><label>Grid Width</label><input type="range" id="gridLineWidth"
@@ -1321,18 +1271,6 @@
                     <div class="rich-text-wrapper">
                         <div class="rich-text-editor" id="quickInput" contenteditable="true" dir="rtl"></div>
                     </div>
-                    <div class="format-toolbar" id="quickFmtToolbar">
-                        <div class="fmt-group">
-                            <button type="button" class="fmt-btn fmt-btn-bold" data-fmt="bold" data-key=""
-                                title="Bold">B</button>
-                            <button type="button" class="fmt-btn fmt-btn-underline" data-fmt="underline" data-key=""
-                                title="Underline">U</button>
-                            <button type="button" class="fmt-btn fmt-btn-italic" data-fmt="italic" data-key=""
-                                title="Italic">I</button>
-                        </div>
-                        <input type="color" class="fmt-color-btn" id="quickFmtColor" data-key="" value="#000000"
-                            title="Text Color">
-                    </div>
                     <button class="btn btn-primary btn-quick-save" onclick="saveQuickEdit()">
                         Save changes
                     </button>
@@ -1341,6 +1279,10 @@
         </div>
 
         <div class="export-bar">
+            <label class="export-option" title="Reverse the characters of the title, subtitle and axis text boxes in the exported SVG">
+                <input type="checkbox" id="invertTextSvg">
+                <span>Invert text boxes</span>
+            </label>
             <button class="btn btn-secondary" onclick="exportSVG()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
                     stroke-linejoin="round">
@@ -1360,6 +1302,17 @@
                 Export PNG
             </button>
         </div>
+    </div>
+
+    <!-- Floating selection formatting toolbar (shown only when text is selected) -->
+    <div id="selFmtToolbar" class="sel-fmt-toolbar" dir="ltr" style="display:none;" role="toolbar"
+        aria-label="Text formatting">
+        <div class="fmt-group">
+            <button type="button" class="fmt-btn fmt-btn-bold" data-fmt="bold" title="Bold">B</button>
+            <button type="button" class="fmt-btn fmt-btn-underline" data-fmt="underline" title="Underline">U</button>
+            <button type="button" class="fmt-btn fmt-btn-italic" data-fmt="italic" title="Italic">I</button>
+        </div>
+        <input type="color" class="fmt-color-btn" id="selFmtColor" value="#000000" title="Text Color">
     </div>
 
     <input type="file" id="fontFileInput" accept=".ttf,.otf,.woff,.woff2" style="display:none;" multiple>
